@@ -50,7 +50,14 @@
             margin: 10px 0;
             background: white;
             white-space: pre-wrap;
-            margin-bottom: 60px; /* Vieta apatiniam mygtukui */
+            margin-bottom: 60px;
+            -webkit-touch-callout: default;
+            -webkit-user-select: text;
+            user-select: text;
+            overflow-y: auto;
+            -webkit-tap-highlight-color: rgba(0,0,0,.1);
+            font-size: 16px;
+            line-height: 1.5;
         }
         button {
             background-color: #4CAF50;
@@ -102,6 +109,7 @@
             width: calc(100% - 40px);
             max-width: 800px;
             margin: 0 auto;
+            -webkit-tap-highlight-color: transparent;
         }
         @media (min-width: 800px) {
             #fixedButton {
@@ -131,7 +139,7 @@
         <input type="file" id="fileInput" class="file-input" accept=".txt">
         <label for="fileInput" class="file-label">Įkelti .txt failą</label>
         
-        <div id="textDisplay" class="text-display" contenteditable="true"></div>
+        <div id="textDisplay" class="text-display" contenteditable="false"></div>
         
         <button onclick="downloadWords()">Atsisiųsti žodžius</button>
         
@@ -176,7 +184,7 @@
             
             if (selectedText) {
                 const textDisplay = document.getElementById('textDisplay');
-                const fullText = textDisplay.innerText;
+                const fullText = textDisplay.textContent;
                 
                 const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
                 const containingSentence = sentences.find(sentence => 
