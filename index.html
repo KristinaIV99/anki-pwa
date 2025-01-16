@@ -11,6 +11,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 16px;
+            padding-bottom: 80px; /* Vieta mygtukui */
             background-color: #f5f5f5;
         }
         .container {
@@ -83,21 +84,34 @@
             background-color: #ffcdd2;
             color: #c62828;
         }
-        #contextButton {
+        #floatingButton {
             position: fixed;
-            display: none;
+            bottom: 20px;
+            right: 20px;
+            left: 20px;
             background-color: #4CAF50;
             color: white;
-            border: none;
+            padding: 16px;
             border-radius: 8px;
-            padding: 8px 16px;
-            font-size: 16px;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             z-index: 1000;
-            height: auto;
-            width: auto;
-            transform: translate(-50%, -50%); /* Centruojame mygtuką */
+            display: none;
+            font-size: 16px;
+            font-weight: bold;
+            width: calc(100% - 40px);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        #floatingButton.active {
+            display: block;
+        }
+        @media (min-width: 800px) {
+            #floatingButton {
+                left: 50%;
+                transform: translateX(-50%);
+                width: 200px;
+            }
         }
     </style>
 </head>
@@ -117,11 +131,10 @@
         <div id="wordsList"></div>
     </div>
 
-    <button id="contextButton" onclick="handleContextButtonClick()">Išsaugoti</button>
+    <button id="floatingButton" onclick="saveWord()">Išsaugoti pažymėtą žodį</button>
 
     <script>
         let selectedWords = [];
-        let contextTimeout;
 
         // Failo įkėlimo apdorojimas
         document.getElementById('fileInput').addEventListener('change', async (e) => {
@@ -143,55 +156,22 @@
             reader.readAsText(file);
         });
 
-        document.getElementById('textDisplay').addEventListener('mouseup', handleSelection);
-        document.getElementById('textDisplay').addEventListener('touchend', handleSelection);
-        
-        // Slepiame mygtuką kai paliečiamas ekranas už teksto ribų
-        document.addEventListener('touchstart', (e) => {
-            if (!e.target.closest('#textDisplay') && !e.target.closest('#contextButton')) {
-                hideContextButton();
-            }
-        });
+        // Teksto pažymėjimo sekimas
+        document.getElementById('textDisplay').addEventListener('mouseup', checkSelection);
+        document.getElementById('textDisplay').addEventListener('touchend', checkSelection);
 
-        function handleSelection(e) {
-            clearTimeout(contextTimeout);
-            
-            contextTimeout = setTimeout(() => {
+        function checkSelection() {
+            setTimeout(() => {
                 const selection = window.getSelection();
                 const selectedText = selection.toString().trim();
+                const floatingButton = document.getElementById('floatingButton');
                 
                 if (selectedText) {
-                    const contextButton = document.getElementById('contextButton');
-                    const range = selection.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    
-                    contextButton.style.display = 'block';
-                    
-                    if (e.type === 'touchend') {
-                        const touchX = e.changedTouches[0].clientX;
-                        const touchY = e.changedTouches[0].clientY;
-                        
-                        // Pozicionuojame virš pažymėto teksto, toliau nuo sistemos meniu
-                        contextButton.style.left = touchX + 'px';
-                        contextButton.style.top = (touchY - 100) + 'px';
-                    } else {
-                        // Kompiuteriui - virš teksto
-                        contextButton.style.left = (rect.left + rect.width / 2) + 'px';
-                        contextButton.style.top = (rect.top - 40 + window.scrollY) + 'px';
-                    }
+                    floatingButton.classList.add('active');
                 } else {
-                    hideContextButton();
+                    floatingButton.classList.remove('active');
                 }
             }, 100);
-        }
-
-        function hideContextButton() {
-            document.getElementById('contextButton').style.display = 'none';
-        }
-
-        function handleContextButtonClick() {
-            saveWord();
-            hideContextButton();
         }
 
         function saveWord() {
@@ -215,6 +195,10 @@
                     updateWordsList();
                     saveToLocalStorage();
                     showStatus('Žodis išsaugotas!', 'success');
+                    
+                    // Nuimame pažymėjimą po išsaugojimo
+                    selection.removeAllRanges();
+                    document.getElementById('floatingButton').classList.remove('active');
                 }
             } else {
                 showStatus('Pažymėkite žodį tekste!', 'error');
