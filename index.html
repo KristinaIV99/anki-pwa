@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki žodžių rinkimas</title>
+    <!-- PWA meta tags -->
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <h1>Anki žodžių rinkimas</h1>
+    <p>Pradžia</p>
+
+    <script>
+        // Service Worker registracija
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registruotas');
+                    })
+                    .catch(error => {
+                        console.log('Service Worker klaida:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
