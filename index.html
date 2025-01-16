@@ -6,7 +6,6 @@
     <title>Anki žodžių rinkimas</title>
     <meta name="theme-color" content="#4CAF50">
     <link rel="manifest" href="manifest.json">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -84,6 +83,20 @@
             background-color: #ffcdd2;
             color: #c62828;
         }
+        #contextButton {
+            position: fixed;
+            display: none;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
@@ -92,19 +105,21 @@
         
         <div id="status"></div>
 
-        <input type="file" id="fileInput" class="file-input" accept=".txt,.md">
-        <label for="fileInput" class="file-label">Įkelti .txt arba .md failą</label>
+        <input type="file" id="fileInput" class="file-input" accept=".txt">
+        <label for="fileInput" class="file-label">Įkelti .txt failą</label>
         
         <div id="textDisplay" class="text-display" contenteditable="true"></div>
         
-        <button onclick="saveWord()">Pridėti pažymėtą žodį</button>
         <button onclick="downloadWords()">Atsisiųsti žodžius</button>
         
         <div id="wordsList"></div>
     </div>
 
+    <button id="contextButton" onclick="handleContextButtonClick()">+</button>
+
     <script>
         let selectedWords = [];
+        let contextTimeout;
 
         // Failo įkėlimo apdorojimas
         document.getElementById('fileInput').addEventListener('change', async (e) => {
@@ -114,17 +129,8 @@
             const reader = new FileReader();
             reader.onload = (event) => {
                 const content = event.target.result;
-                const isMarkdown = file.name.toLowerCase().endsWith('.md');
-                
-                // Rodome tekstą ir išsaugome į localStorage
-                if (isMarkdown) {
-                    document.getElementById('textDisplay').innerHTML = marked.parse(content);
-                } else {
-                    document.getElementById('textDisplay').textContent = content;
-                }
-                
+                document.getElementById('textDisplay').textContent = content;
                 localStorage.setItem('currentText', content);
-                localStorage.setItem('isMarkdown', isMarkdown);
                 showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
             };
             
@@ -134,6 +140,48 @@
             
             reader.readAsText(file);
         });
+
+        document.getElementById('textDisplay').addEventListener('mouseup', handleSelection);
+        document.getElementById('textDisplay').addEventListener('touchend', handleSelection);
+
+        function handleSelection(e) {
+            clearTimeout(contextTimeout);
+            
+            contextTimeout = setTimeout(() => {
+                const selection = window.getSelection();
+                const selectedText = selection.toString().trim();
+                
+                if (selectedText) {
+                    const contextButton = document.getElementById('contextButton');
+                    const range = selection.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    
+                    // Pozicionuojame mygtuką šalia pažymėto teksto
+                    contextButton.style.display = 'block';
+                    
+                    // Mobiliam įrenginiui
+                    if (e.type === 'touchend') {
+                        contextButton.style.left = (e.changedTouches[0].clientX - 20) + 'px';
+                        contextButton.style.top = (e.changedTouches[0].clientY - 60) + 'px';
+                    } else {
+                        // Kompiuteriui
+                        contextButton.style.left = (rect.right + window.scrollX) + 'px';
+                        contextButton.style.top = (rect.top + window.scrollY) + 'px';
+                    }
+                } else {
+                    hideContextButton();
+                }
+            }, 100);
+        }
+
+        function hideContextButton() {
+            document.getElementById('contextButton').style.display = 'none';
+        }
+
+        function handleContextButtonClick() {
+            saveWord();
+            hideContextButton();
+        }
 
         function saveWord() {
             const selection = window.getSelection();
@@ -194,14 +242,8 @@
 
             // Įkeliame tekstą
             const savedText = localStorage.getItem('currentText');
-            const isMarkdown = localStorage.getItem('isMarkdown') === 'true';
-            
             if (savedText) {
-                if (isMarkdown) {
-                    document.getElementById('textDisplay').innerHTML = marked.parse(savedText);
-                } else {
-                    document.getElementById('textDisplay').textContent = savedText;
-                }
+                document.getElementById('textDisplay').textContent = savedText;
             }
         }
 
