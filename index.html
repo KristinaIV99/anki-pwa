@@ -4,18 +4,161 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anki žodžių rinkimas</title>
-    <!-- PWA meta tags -->
     <meta name="theme-color" content="#4CAF50">
     <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .input-area {
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .selected-word {
+            background: #e0f2f1;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        #wordsList {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Anki žodžių rinkimas</h1>
-    <p>Pradžia</p>
+    <div class="container">
+        <h1>Anki žodžių rinkimas</h1>
+        
+        <div class="input-area">
+            <textarea id="textInput" placeholder="Įveskite arba įkopijuokite tekstą čia..."></textarea>
+            <button onclick="saveWord()">Pridėti pažymėtą žodį</button>
+            <button onclick="downloadWords()">Atsisiųsti žodžius</button>
+        </div>
+
+        <div id="wordsList"></div>
+    </div>
 
     <script>
-        // Service Worker registracija
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+        let selectedWords = [];
+
+        function saveWord() {
+            const selection = window.getSelection();
+            const selectedText = selection.toString().trim();
+            
+            if (selectedText) {
+                const textArea = document.getElementById('textInput');
+                const fullText = textArea.value;
+                
+                // Ieškome sakinio su pažymėtu žodžiu
+                const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
+                const containingSentence = sentences.find(sentence => 
+                    sentence.includes(selectedText)
+                );
+
+                if (containingSentence) {
+                    selectedWords.push({
+                        word: selectedText,
+                        sentence: containingSentence.trim()
+                    });
+                    updateWordsList();
+                    saveToLocalStorage();
+                    alert('Žodis išsaugotas!');
+                }
+            } else {
+                alert('Pažymėkite žodį tekste!');
+            }
+        }
+
+        function updateWordsList() {
+            const wordsList = document.getElementById('wordsList');
+            wordsList.innerHTML = selectedWords.map((item, index) => `
+                <div class="selected-word">
+                    <strong>${item.word}</strong><br>
+                    ${item.sentence}
+                    <button onclick="removeWord(${index})" style="background-color: #f44336;">Pašalinti</button>
+                </div>
+            `).join('');
+        }
+
+        function removeWord(index) {
+            selectedWords.splice(index, 1);
+            updateWordsList();
+            saveToLocalStorage();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('ankiWords', JSON.stringify(selectedWords));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('ankiWords');
+            if (saved) {
+                selectedWords = JSON.parse(saved);
+                updateWordsList();
+            }
+        }
+
+        function downloadWords() {
+            if (selectedWords.length === 0) {
+                alert('Nėra išsaugotų žodžių!');
+                return;
+            }
+
+            const content = selectedWords
+                .map(item => `${item.word}\t${item.sentence}`)
+                .join('\n');
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'anki-zodziai.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Užkrauname išsaugotus žodžius puslapiui užsikrovus
+        window.addEventListener('load', () => {
+            loadFromLocalStorage();
+            
+            // Registruojame Service Worker
+            if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(registration => {
                         console.log('Service Worker registruotas');
@@ -23,8 +166,8 @@
                     .catch(error => {
                         console.log('Service Worker klaida:', error);
                     });
-            });
-        }
+            }
+        });
     </script>
 </body>
 </html>
