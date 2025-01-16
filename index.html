@@ -89,13 +89,15 @@
             background-color: #4CAF50;
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            font-size: 24px;
+            border-radius: 8px;
+            padding: 8px 16px;
+            font-size: 16px;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
             z-index: 1000;
+            height: auto;
+            width: auto;
+            transform: translate(-50%, -50%); /* Centruojame mygtuką */
         }
     </style>
 </head>
@@ -115,7 +117,7 @@
         <div id="wordsList"></div>
     </div>
 
-    <button id="contextButton" onclick="handleContextButtonClick()">+</button>
+    <button id="contextButton" onclick="handleContextButtonClick()">Išsaugoti</button>
 
     <script>
         let selectedWords = [];
@@ -143,6 +145,13 @@
 
         document.getElementById('textDisplay').addEventListener('mouseup', handleSelection);
         document.getElementById('textDisplay').addEventListener('touchend', handleSelection);
+        
+        // Slepiame mygtuką kai paliečiamas ekranas už teksto ribų
+        document.addEventListener('touchstart', (e) => {
+            if (!e.target.closest('#textDisplay') && !e.target.closest('#contextButton')) {
+                hideContextButton();
+            }
+        });
 
         function handleSelection(e) {
             clearTimeout(contextTimeout);
@@ -156,17 +165,19 @@
                     const range = selection.getRangeAt(0);
                     const rect = range.getBoundingClientRect();
                     
-                    // Pozicionuojame mygtuką šalia pažymėto teksto
                     contextButton.style.display = 'block';
                     
-                    // Mobiliam įrenginiui
                     if (e.type === 'touchend') {
-                        contextButton.style.left = (e.changedTouches[0].clientX - 20) + 'px';
-                        contextButton.style.top = (e.changedTouches[0].clientY - 60) + 'px';
+                        const touchX = e.changedTouches[0].clientX;
+                        const touchY = e.changedTouches[0].clientY;
+                        
+                        // Pozicionuojame virš pažymėto teksto, toliau nuo sistemos meniu
+                        contextButton.style.left = touchX + 'px';
+                        contextButton.style.top = (touchY - 100) + 'px';
                     } else {
-                        // Kompiuteriui
-                        contextButton.style.left = (rect.right + window.scrollX) + 'px';
-                        contextButton.style.top = (rect.top + window.scrollY) + 'px';
+                        // Kompiuteriui - virš teksto
+                        contextButton.style.left = (rect.left + rect.width / 2) + 'px';
+                        contextButton.style.top = (rect.top - 40 + window.scrollY) + 'px';
                     }
                 } else {
                     hideContextButton();
@@ -191,7 +202,6 @@
                 const textDisplay = document.getElementById('textDisplay');
                 const fullText = textDisplay.innerText;
                 
-                // Ieškome sakinio su pažymėtu žodžiu
                 const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
                 const containingSentence = sentences.find(sentence => 
                     sentence.includes(selectedText)
@@ -233,14 +243,12 @@
         }
 
         function loadFromLocalStorage() {
-            // Įkeliame žodžius
             const savedWords = localStorage.getItem('ankiWords');
             if (savedWords) {
                 selectedWords = JSON.parse(savedWords);
                 updateWordsList();
             }
 
-            // Įkeliame tekstą
             const savedText = localStorage.getItem('currentText');
             if (savedText) {
                 document.getElementById('textDisplay').textContent = savedText;
@@ -279,11 +287,9 @@
             }, 3000);
         }
 
-        // Užkrauname išsaugotus duomenis puslapiui užsikrovus
         window.addEventListener('load', () => {
             loadFromLocalStorage();
             
-            // Registruojame Service Worker
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(registration => {
