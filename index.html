@@ -6,6 +6,7 @@
     <title>Anki žodžių rinkimas</title>
     <meta name="theme-color" content="#4CAF50">
     <link rel="manifest" href="manifest.json">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -25,16 +26,30 @@
             text-align: center;
             color: #333;
         }
-        .input-area {
-            margin: 20px 0;
+        .file-input {
+            display: none;
         }
-        textarea {
+        .file-label {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            text-align: center;
             width: 100%;
-            height: 150px;
+            box-sizing: border-box;
+        }
+        .text-display {
+            width: 100%;
+            min-height: 200px;
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
-            margin-bottom: 10px;
+            margin: 10px 0;
+            background: white;
+            white-space: pre-wrap;
         }
         button {
             background-color: #4CAF50;
@@ -54,8 +69,20 @@
             border-radius: 4px;
             border-left: 4px solid #4CAF50;
         }
-        #wordsList {
-            margin-top: 20px;
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        .status-success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status-error {
+            background-color: #ffcdd2;
+            color: #c62828;
         }
     </style>
 </head>
@@ -63,25 +90,58 @@
     <div class="container">
         <h1>Anki žodžių rinkimas</h1>
         
-        <div class="input-area">
-            <textarea id="textInput" placeholder="Įveskite arba įkopijuokite tekstą čia..."></textarea>
-            <button onclick="saveWord()">Pridėti pažymėtą žodį</button>
-            <button onclick="downloadWords()">Atsisiųsti žodžius</button>
-        </div>
+        <div id="status"></div>
 
+        <input type="file" id="fileInput" class="file-input" accept=".txt,.md">
+        <label for="fileInput" class="file-label">Įkelti .txt arba .md failą</label>
+        
+        <div id="textDisplay" class="text-display" contenteditable="true"></div>
+        
+        <button onclick="saveWord()">Pridėti pažymėtą žodį</button>
+        <button onclick="downloadWords()">Atsisiųsti žodžius</button>
+        
         <div id="wordsList"></div>
     </div>
 
     <script>
         let selectedWords = [];
 
+        // Failo įkėlimo apdorojimas
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                const isMarkdown = file.name.toLowerCase().endsWith('.md');
+                
+                // Rodome tekstą ir išsaugome į localStorage
+                if (isMarkdown) {
+                    document.getElementById('textDisplay').innerHTML = marked.parse(content);
+                } else {
+                    document.getElementById('textDisplay').textContent = content;
+                }
+                
+                localStorage.setItem('currentText', content);
+                localStorage.setItem('isMarkdown', isMarkdown);
+                showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
+            };
+            
+            reader.onerror = () => {
+                showStatus('Klaida skaitant failą!', 'error');
+            };
+            
+            reader.readAsText(file);
+        });
+
         function saveWord() {
             const selection = window.getSelection();
             const selectedText = selection.toString().trim();
             
             if (selectedText) {
-                const textArea = document.getElementById('textInput');
-                const fullText = textArea.value;
+                const textDisplay = document.getElementById('textDisplay');
+                const fullText = textDisplay.innerText;
                 
                 // Ieškome sakinio su pažymėtu žodžiu
                 const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
@@ -96,10 +156,10 @@
                     });
                     updateWordsList();
                     saveToLocalStorage();
-                    alert('Žodis išsaugotas!');
+                    showStatus('Žodis išsaugotas!', 'success');
                 }
             } else {
-                alert('Pažymėkite žodį tekste!');
+                showStatus('Pažymėkite žodį tekste!', 'error');
             }
         }
 
@@ -125,16 +185,29 @@
         }
 
         function loadFromLocalStorage() {
-            const saved = localStorage.getItem('ankiWords');
-            if (saved) {
-                selectedWords = JSON.parse(saved);
+            // Įkeliame žodžius
+            const savedWords = localStorage.getItem('ankiWords');
+            if (savedWords) {
+                selectedWords = JSON.parse(savedWords);
                 updateWordsList();
+            }
+
+            // Įkeliame tekstą
+            const savedText = localStorage.getItem('currentText');
+            const isMarkdown = localStorage.getItem('isMarkdown') === 'true';
+            
+            if (savedText) {
+                if (isMarkdown) {
+                    document.getElementById('textDisplay').innerHTML = marked.parse(savedText);
+                } else {
+                    document.getElementById('textDisplay').textContent = savedText;
+                }
             }
         }
 
         function downloadWords() {
             if (selectedWords.length === 0) {
-                alert('Nėra išsaugotų žodžių!');
+                showStatus('Nėra išsaugotų žodžių!', 'error');
                 return;
             }
 
@@ -153,7 +226,18 @@
             URL.revokeObjectURL(url);
         }
 
-        // Užkrauname išsaugotus žodžius puslapiui užsikrovus
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type === 'success' ? 'status-success' : 'status-error';
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Užkrauname išsaugotus duomenis puslapiui užsikrovus
         window.addEventListener('load', () => {
             loadFromLocalStorage();
             
