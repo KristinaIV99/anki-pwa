@@ -138,8 +138,11 @@
 
         <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
         <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
-        
-        <div id="textDisplay" class="text-display" contenteditable="false"></div>
+		
+		<!-- Pridedame teksto išvalymo mygtuką -->
+		<button id="clearTextBtn" onclick="clearText()" style="background-color: #f44336;">Ištrinti tekstą</button>
+		
+		<div id="textDisplay" class="text-display" contenteditable="false"></div>
         
         <button onclick="downloadWords()">Atsisiųsti žodžius</button>
         
@@ -198,24 +201,47 @@
             const wordCount = document.getElementById('wordCount');
             wordCount.textContent = `Išsaugota žodžių: ${selectedWords.length}`;
         }
-
-        function saveWord() {
+		// Nauja funkcija teksto išvalymui
+		function clearText() {
+			const textDisplay = document.getElementById('textDisplay');
+			textDisplay.textContent = '';
+			localStorage.removeItem('currentText');
+			showStatus('Tekstas ištrintas!', 'success');
+		}
+	
+		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
+		function saveWord() {
             const selection = window.getSelection();
             const selectedText = selection.toString().trim();
             
             if (selectedText) {
                 const textDisplay = document.getElementById('textDisplay');
                 const fullText = textDisplay.textContent;
-                
-                const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
-                const containingSentence = sentences.find(sentence => 
-                    sentence.includes(selectedText)
-                );
-
-                if (containingSentence) {
+				
+				// Randame pažymėto teksto poziciją
+				const selectionStart = textDisplay.textContent.indexOf(selectedText, selection.anchorOffset);
+				
+				// Ieškome sakinio ribų
+				let sentenceStart = selectionStart;
+				let sentenceEnd = selectionStart + selectedText.length;
+				
+				// Ieškome sakinio pradžios
+				while (sentenceStart > 0 && !'.!?'.includes(fullText[sentenceStart - 1])) {
+					sentenceStart--;
+				}
+				
+				// Ieškome sakinio pabaigos
+				while (sentenceEnd < fullText.length && !'.!?'.includes(fullText[sentenceEnd])) {
+					sentenceEnd++;
+				}
+				
+				// Ištraukiame sakinį
+			const containingSentence = fullText.slice(sentenceStart, sentenceEnd + 1).trim();
+	
+				if (containingSentence) {
                     selectedWords.push({
                         word: selectedText,
-                        sentence: containingSentence.trim()
+                        sentence: containingSentence
                     });
                     updateWordsList();
                     saveToLocalStorage();
