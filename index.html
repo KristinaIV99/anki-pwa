@@ -273,14 +273,12 @@
 
         function displayCurrentPage() {
             const textDisplay = document.getElementById('textDisplay');
-            textDisplay.textContent = pages[currentPageIndex] || '';
+            let pageContent = pages[currentPageIndex] || '';
             
 			// Paryškinti tik išsaugotus žodžius
 			selectedWords.forEach(({ word }) => {
-				pageContent = highlightText(pageContent, word, false);
-			});
 			
-			textDisplay.innerHTML = pageContent;
+			textDisplay.textContent = pageContent; // Grįžtame prie textContent
 		
             document.getElementById('currentPage').textContent = currentPageIndex + 1;
             document.getElementById('totalPages').textContent = pages.length;
