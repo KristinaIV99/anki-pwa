@@ -87,7 +87,15 @@
 			transform: scale(1.05);
 		}
         .page-info {
-            display: none;
+            dposition: fixed;
+			bottom: 20px;
+			right: 20px;
+			background-color: rgba(0, 0, 0, 0.7);
+			color: white;
+			padding: 8px 12px;
+			border-radius: 20px;
+			font-size: 14px;
+			z-index: 1000;
         }
 		
         h1 {
@@ -211,7 +219,6 @@
         <h1>Anki žodžių rinkimas</h1>
         
         <div id="status"></div>
-
         <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
         <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
 		
@@ -224,7 +231,11 @@
         <div class="page-container">
             <div id="textDisplay" class="text-page"></div>
         </div>
-
+    
+		<div class="page-info">
+			<span id="currentPage">1</span>/<span id="totalPages">1</span>
+		</div>
+	
         <div class="pagination-controls">
             <button class="page-button page-button-left" onclick="previousPage()">◀</button>
 			<button class="page-button page-button-right" onclick="nextPage()">▶</button>
