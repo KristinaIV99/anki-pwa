@@ -244,21 +244,38 @@
 
         // Naujas puslapiavimo funkcionalumas
         function splitTextIntoPages(text) {
-            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-            let currentPageText = '';
-            let currentWordCount = 0;
-            pages = []; // Išvalome puslapius
+			// Patikriname, ar tekstas nėra tuščias
+			if (!text || text.trim().length === 0) {
+				pages = [];
+				totalPages = 1;
+				currentPage = 1;
+				return;
+			}
+		
+			// Išskaidome tekstą į sakinius
+			const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+			let currentPageText = '';
+			let currentWordCount = 0;
+			pages = []; // Išvalome puslapius
 		
 			for (let sentence of sentences) {
-				const sentenceWordCount = sentence.trim().split(/\s+/).length;
-				
-				// Jei pridėjus šį sakinį viršysime 250 žodžių, pradedame naują puslapį
-				if (currentWordCount + sentenceWordCount > 250 && currentPageText.length > 0) {
-					pages.push(currentPageText.trim());
-					currentPageText = sentence;
+				// Pašaliname nereikalingus tarpus
+				const trimmedSentence = sentence.trim();
+				// Skaičiuojame žodžius sakinyje
+				const sentenceWordCount = trimmedSentence.split(/\s+/).length;
+		
+				// Tikriname, ar pridėjus šį sakinį neviršysime 250 žodžių limito
+				if (currentWordCount + sentenceWordCount > 250) {
+					// Jei viršijame, išsaugome dabartinį puslapį
+					if (currentPageText.trim().length > 0) {
+						pages.push(currentPageText.trim());
+					}
+					// Pradedame naują puslapį
+					currentPageText = trimmedSentence + ' ';
 					currentWordCount = sentenceWordCount;
 				} else {
-					currentPageText += sentence;
+					// Jei neviršijame, pridedame sakinį prie dabartinio puslapio
+					currentPageText += trimmedSentence + ' ';
 					currentWordCount += sentenceWordCount;
 				}
 			}
@@ -268,8 +285,12 @@
 				pages.push(currentPageText.trim());
 			}
 		
+			// Nustatome bendrą puslapių skaičių
 			totalPages = pages.length;
+			// Grįžtame į pirmą puslapį
 			currentPage = 1;
+		
+			console.log(`Sukurti ${totalPages} puslapiai`);
 			showCurrentPage();
 			updatePageInfo();
 		}
@@ -354,28 +375,36 @@
                         content = result.value.replace(/<[^>]*>/g, ''); // Pašaliname HTML žymes
                     } else {
                         // .txt ir .md failams
-                        content = event.target.result;
-                    }
-
-                    splitTextIntoPages(content);
-                    localStorage.setItem('currentText', content);
-                    showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
-                    updateWordCount();
-                } catch (error) {
-                    showStatus('Klaida apdorojant failą: ' + error.message, 'error');
-                }
-            };
-            
-            reader.onerror = () => {
-                showStatus('Klaida skaitant failą!', 'error');
-            };
-            
-            if (fileType === 'docx') {
-                reader.readAsArrayBuffer(file);
-            } else {
-                reader.readAsText(file);
-            }
-        });
+						content = event.target.result;
+					}
+		
+					console.log('Nuskaityto teksto ilgis:', content.length);
+					
+					// Patikriname, ar turime tekstą
+					if (content.length > 0) {
+						splitTextIntoPages(content);
+						localStorage.setItem('currentText', content);
+						showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
+						updateWordCount();
+					} else {
+						showStatus('Įkeltas failas yra tuščias!', 'error');
+					}
+				} catch (error) {
+					console.error('Klaida apdorojant failą:', error);
+					showStatus('Klaida apdorojant failą: ' + error.message, 'error');
+				}
+			};
+			
+			reader.onerror = () => {
+				showStatus('Klaida skaitant failą!', 'error');
+			};
+			
+			if (fileType === 'docx') {
+				reader.readAsArrayBuffer(file);
+			} else {
+				reader.readAsText(file);
+			}
+		});
 
         function updateWordCount() {
             const wordCount = document.getElementById('wordCount');
