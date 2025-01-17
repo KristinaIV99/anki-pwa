@@ -173,18 +173,6 @@
             border: 1px solid #ddd;
             padding: 20px;
         }
-
-		.primary-highlight {
-			background-color: #ffeb3b;
-			border-radius: 2px;
-			padding: 2px 0;
-		}
-		
-		.secondary-highlight {
-			background-color: #fff59d;
-			border-radius: 2px;
-			padding: 2px 0;
-		}
     </style>
 </head>
 <body>
@@ -263,23 +251,10 @@
 			return pages;
 		}
 
-		function highlightText(text, phrase, primaryHighlight = false) {
-			if (!phrase) return text;
-			
-			const regex = new RegExp(`(${phrase})`, 'gi');
-			const highlightClass = primaryHighlight ? 'primary-highlight' : 'secondary-highlight';
-			return text.replace(regex, `<span class="${highlightClass}">$1</span>`);
-		}
-
         function displayCurrentPage() {
             const textDisplay = document.getElementById('textDisplay');
-            let pageContent = pages[currentPageIndex] || '';
+            textDisplay.textContent = pages[currentPageIndex] || '';
             
-			// Paryškinti tik išsaugotus žodžius
-			selectedWords.forEach(({ word }) => {
-			
-			textDisplay.textContent = pageContent; // Grįžtame prie textContent
-		
             document.getElementById('currentPage').textContent = currentPageIndex + 1;
             document.getElementById('totalPages').textContent = pages.length;
         }
