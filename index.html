@@ -175,17 +175,15 @@
         }
 
 		.primary-highlight {
-			background-color: #ffeb3b !important;
+			background-color: #ffeb3b;
 			border-radius: 2px;
 			padding: 2px 0;
-			-webkit-tap-highlight-color: transparent;
 		}
 		
 		.secondary-highlight {
-			background-color: #fff59d !important;
+			background-color: #fff59d;
 			border-radius: 2px;
 			padding: 2px 0;
-			-webkit-tap-highlight-color: transparent;
 		}
     </style>
 </head>
@@ -231,41 +229,8 @@
         let currentPageIndex = 0;
         let pages = [];
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
-		
-		// Pridedame naują kodą čia
-		const textDisplay = document.getElementById('textDisplay');
-		
-		// Mouse evento klausymas (desktop)
-		textDisplay.addEventListener('mouseup', updateHighlights);
-		
-		// Touch evento klausymas (mobile)
-		textDisplay.addEventListener('touchend', updateHighlights);
-		
-		// Paryškinimo atnaujinimo funkcija
-		function updateHighlights() {
-			// Leidžiame šiek tiek laiko praeiti, kad selection būtų atnaujintas
-			setTimeout(() => {
-				displayCurrentPage();
-			}, 10);
-		}
-		
-		// Atnaujinta highlightText funkcija
-		function highlightText(text, phrase, primaryHighlight = false) {
-			if (!phrase) return text;
-			
-			try {
-				const escapedPhrase = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-				const regex = new RegExp(`(${escapedPhrase})`, 'gi');
-				const highlightClass = primaryHighlight ? 'primary-highlight' : 'secondary-highlight';
-				return text.replace(regex, `<span class="${highlightClass}">$1</span>`);
-			} catch (e) {
-				console.error('Klaida highlightText funkcijoje:', e);
-				return text;
-			}
-		}
-		
-		// Tada seka jūsų kitos funkcijos
-		function splitTextIntoPages(text) {
+
+        function splitTextIntoPages(text) {
 			const pages = [];
 			let currentPage = '';
 			let textToSplit = text;
@@ -301,45 +266,39 @@
 		function highlightText(text, phrase, primaryHighlight = false) {
 			if (!phrase) return text;
 			
-			try {
-				const escapedPhrase = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-				const regex = new RegExp(`(${escapedPhrase})`, 'gi');
-				const highlightClass = primaryHighlight ? 'primary-highlight' : 'secondary-highlight';
-				return text.replace(regex, `<span class="${highlightClass}">$1</span>`);
-			} catch (e) {
-				console.error('Klaida highlightText funkcijoje:', e);
-				return text;
-			}
-		}
-		
-		function nextPage() {
-			if (currentPageIndex < pages.length - 1) {
-				currentPageIndex++;
-				displayCurrentPage();
-			}
-		}
-		
-		function previousPage() {
-			if (currentPageIndex > 0) {
-				currentPageIndex--;
-				displayCurrentPage();
-			}
+			const regex = new RegExp(`(${phrase})`, 'gi');
+			const highlightClass = primaryHighlight ? 'primary-highlight' : 'secondary-highlight';
+			return text.replace(regex, `<span class="${highlightClass}">$1</span>`);
 		}
 
-		function displayCurrentPage() {
-			const textDisplay = document.getElementById('textDisplay');
-			let pageContent = pages[currentPageIndex] || '';
-			
-			// Paryškinti visus išsaugotus žodžius
+        function displayCurrentPage() {
+            const textDisplay = document.getElementById('textDisplay');
+            textDisplay.textContent = pages[currentPageIndex] || '';
+            
+			// Paryškinti tik išsaugotus žodžius
 			selectedWords.forEach(({ word }) => {
 				pageContent = highlightText(pageContent, word, false);
 			});
 			
 			textDisplay.innerHTML = pageContent;
-			
-			document.getElementById('currentPage').textContent = currentPageIndex + 1;
-			document.getElementById('totalPages').textContent = pages.length;
-		}
+		
+            document.getElementById('currentPage').textContent = currentPageIndex + 1;
+            document.getElementById('totalPages').textContent = pages.length;
+        }
+
+        function nextPage() {
+            if (currentPageIndex < pages.length - 1) {
+                currentPageIndex++;
+                displayCurrentPage();
+            }
+        }
+
+        function previousPage() {
+            if (currentPageIndex > 0) {
+                currentPageIndex--;
+                displayCurrentPage();
+            }
+        }
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
@@ -405,41 +364,22 @@
 			showStatus('Tekstas ištrintas!', 'success');
 		}
 	
-		function getOriginalText(element, selection) {
-			// Gauname tekstą be HTML žymų
-			const originalText = element.textContent;
-			
-			// Gauname pažymėjimo pozicijas
-			const range = selection.getRangeAt(0);
-			const preSelectionRange = range.cloneRange();
-			preSelectionRange.selectNodeContents(element);
-			preSelectionRange.setEnd(range.startContainer, range.startOffset);
-			const start = preSelectionRange.toString().length;
-			
-			// Gauname pažymėtą tekstą iš originalaus teksto
-			const selectedText = selection.toString().trim();
-			return {
-				text: selectedText,
-				start: start,
-				end: start + selectedText.length
-			};
-		}
-		
+		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
 		function saveWord() {
 			const selection = window.getSelection();
-			const textDisplay = document.getElementById('textDisplay');
+			const selectedText = selection.toString().trim();
 			
-			if (selection.rangeCount > 0) {
-				const selectionInfo = getOriginalText(textDisplay, selection);
-				const selectedText = selectionInfo.text;
-				
-				if (selectedText) {
-					const fullText = pages[currentPageIndex];
+		    if (selectedText) {
+				const fullText = pages[currentPageIndex];
 				
 				if (fullText) {
-					// Naudojame pozicijas iš selectionInfo
-					const selectionStart = selectionInfo.start;
-					const selectionEnd = selectionInfo.end;
+					// Gauname pažymėto teksto poziciją
+					const range = selection.getRangeAt(0);
+					const preSelectionRange = range.cloneRange();
+					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
+					preSelectionRange.setEnd(range.startContainer, range.startOffset);
+					const selectionStart = preSelectionRange.toString().length;
+					const selectionEnd = selectionStart + selectedText.length;
 		
 					// Funkcija patikrinti ar po sakinio eina dialogas
 					function isDialogueContinuation(text, position) {
