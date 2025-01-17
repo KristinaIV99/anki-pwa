@@ -19,20 +19,23 @@
             margin: 0 auto;
             background: #1a1a1a;
             padding: 15px;
+			padding-top: 80px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .page-container {
-            position: relative;
+            width: 100%;
             height: auto;
 			min-height: calc(100vh - 250px);
             overflow: visible;
+			margin: 0 auto;  /* Centruoja page-container */
+			padding: 0;  /* Nuimame bet kokį papildomą padding */
         }
         .text-page {
             width: 100%;
 			height: auto;
             overflow-y: visible;
-            padding: 10px 15px;
+            padding: 15px 20px;
             border: 1px solid #ddd;
             border-radius: 4px;
             background: #fbf0d9;
@@ -74,11 +77,6 @@
         .page-info {
             display: none;
         }
-		
-		/* Pridedame papildomą padding viršuje konteineriui */
-		.container {
-			padding-top: 80px;
-		}
 		
         h1 {
             text-align: center;
