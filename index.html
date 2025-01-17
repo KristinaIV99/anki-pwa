@@ -237,28 +237,30 @@
         let pages = [];
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 
-        function splitTextIntoPages(text) {
+		function splitTextIntoPages(text) {
 			const pages = [];
+			let currentPage = '';
 			let textToSplit = text;
 			
-			while (textToSplit.length > 0) {
-				// Paimame didesnį teksto gabalą nei reikia, kad užtikrintume pilnus sakinius
-				let chunk = textToSplit.split(/\s+/).slice(0, WORDS_PER_PAGE * 1.5).join(' ');
+			// Paprastas dalinimas pagal taškus
+			const sentences = text.split(/([.!?]+\s+)/);
+			let currentLength = 0;
+			
+			for (let i = 0; i < sentences.length; i++) {
+				const sentence = sentences[i];
+				currentLength += sentence.split(/\s+/).length;
 				
-				// Jei chunk trumpesnis nei likęs tekstas, ieškome paskutinio sakinio pabaigos
-				if (chunk.length < textToSplit.length) {
-					const lastSentence = chunk.match(/[^.!?]*[.!?]["\']?\s*(?=[A-ZĖĄČĘĖĮŠŲŪŽ]|$)/g);
-					if (lastSentence) {
-						// Surandame paskutinio pilno sakinio poziciją
-						const lastIndex = chunk.lastIndexOf(lastSentence[lastSentence.length - 1]);
-						chunk = textToSplit.slice(0, lastIndex + lastSentence[lastSentence.length - 1].length);
-					}
+				if (currentLength > WORDS_PER_PAGE) {
+					pages.push(currentPage.trim());
+					currentPage = sentence;
+					currentLength = sentence.split(/\s+/).length;
 				} else {
-					chunk = textToSplit;
+					currentPage += sentence;
 				}
-				
-				pages.push(chunk.trim());
-				textToSplit = textToSplit.slice(chunk.length).trim();
+			}
+			
+			if (currentPage) {
+				pages.push(currentPage.trim());
 			}
 			
 			return pages;
