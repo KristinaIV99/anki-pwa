@@ -173,6 +173,18 @@
             border: 1px solid #ddd;
             padding: 20px;
         }
+
+		.primary-highlight {
+			background-color: #e0f2f1;
+			border-radius: 2px;
+			padding: 2px 0;
+		}
+		
+		.secondary-highlight {
+			background-color: #f5f5f5;
+			border-radius: 2px;
+			padding: 2px 0;
+		}
     </style>
 </head>
 <body>
@@ -251,27 +263,35 @@
 			return pages;
 		}
 
-        function displayCurrentPage() {
-            const textDisplay = document.getElementById('textDisplay');
-            textDisplay.textContent = pages[currentPageIndex] || '';
-            
-            document.getElementById('currentPage').textContent = currentPageIndex + 1;
-            document.getElementById('totalPages').textContent = pages.length;
-        }
-
-        function nextPage() {
-            if (currentPageIndex < pages.length - 1) {
-                currentPageIndex++;
-                displayCurrentPage();
-            }
-        }
-
-        function previousPage() {
-            if (currentPageIndex > 0) {
-                currentPageIndex--;
-                displayCurrentPage();
-            }
-        }
+		function highlightText(text, phrase, primaryHighlight = false) {
+			if (!phrase) return text;
+			
+			const regex = new RegExp(`(${phrase})`, 'gi');
+			const highlightClass = primaryHighlight ? 'primary-highlight' : 'secondary-highlight';
+			return text.replace(regex, `<span class="${highlightClass}">$1</span>`);
+		}
+		
+		function displayCurrentPage() {
+			const textDisplay = document.getElementById('textDisplay');
+			let pageContent = pages[currentPageIndex] || '';
+			
+			// Paryškinti visus išsaugotus žodžius
+			selectedWords.forEach(({ word }) => {
+				pageContent = highlightText(pageContent, word, false);
+			});
+			
+			// Jei yra aktyvus pažymėjimas, paryškinti jį ryškesne spalva
+			const selection = window.getSelection();
+			const selectedText = selection.toString().trim();
+			if (selectedText) {
+				pageContent = highlightText(pageContent, selectedText, true);
+			}
+			
+			textDisplay.innerHTML = pageContent; // Naudojame innerHTML vietoj textContent
+			
+			document.getElementById('currentPage').textContent = currentPageIndex + 1;
+			document.getElementById('totalPages').textContent = pages.length;
+		}
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
