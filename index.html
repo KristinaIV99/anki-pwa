@@ -342,6 +342,17 @@
         }
 	
 		// Nauja funkcija teksto išvalymui
+		function clearText() {
+			const textDisplay = document.getElementById('textDisplay');
+			textDisplay.textContent = '';
+			pages = []; // Pridėti šią eilutę
+			currentPageIndex = 0; // Pridėti šią eilutę
+			displayCurrentPage(); // Pridėti šią eilutę
+			localStorage.removeItem('currentText');
+			showStatus('Tekstas ištrintas!', 'success');
+		}
+	
+		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
 		function saveWord() {
 			const selection = window.getSelection();
 			const selectedText = selection.toString().trim();
@@ -360,28 +371,26 @@
 		
 					// Funkcija patikrinti ar po sakinio eina dialogas
 					function isDialogueContinuation(text, position) {
-						if (position >= text.length - 1) return false;
+						// Patikriname ar po skiriamojo ženklo (?, !) seka žodis iš mažosios raidės
+						const nextChar = text.charAt(position + 1);
+						if (!nextChar) return false;
 						
-						// Praleidžiame tarpus, brūkšnius ir kabutes
+						// Praleidžiame tarpus ir brūkšnius
 						let i = position + 1;
-						while (i < text.length && [' ', '–', '-', '"', '"'].includes(text[i])) {
+						while (i < text.length && [' ', '–', '-'].includes(text[i])) {
 							i++;
 						}
-						// Tikriname ar seka mažoji raidė
-						const nextChar = text.charAt(i);
-						return nextChar && nextChar === nextChar.toLowerCase() && nextChar !== ' ';
+						// Jei po to seka mažoji raidė, tai dialogo tęsinys
+						return text[i] && text[i] === text[i].toLowerCase() && text[i] !== ' ';
 					}
 		
 					// Randame sakinio pradžią
 					let sentenceStart = selectionStart;
 					while (sentenceStart > 0) {
 						const char = fullText.charAt(sentenceStart - 1);
+						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
 						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
-							// Patikriname ar tai ne santrumpa (pvz., "t.ex." arba "d.v.s.")
-							const prevChar = sentenceStart > 1 ? fullText.charAt(sentenceStart - 2) : '';
-							if (!/[A-Za-z]/.test(prevChar)) {
-								break;
-							}
+							break;
 						}
 						sentenceStart--;
 					}
@@ -391,13 +400,12 @@
 					while (sentenceEnd < fullText.length) {
 						const char = fullText.charAt(sentenceEnd);
 						if (['.', '?', '!'].includes(char)) {
-							// Patikriname ar tai ne santrumpa
-							const nextChar = fullText.charAt(sentenceEnd + 1) || '';
-							if (!isDialogueContinuation(fullText, sentenceEnd) && 
-								!(/[A-Za-z]/.test(nextChar))) {
-								sentenceEnd++;
-								break;
+							sentenceEnd++;
+							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
+							if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
+								continue;
 							}
+							break;
 						}
 						sentenceEnd++;
 					}
@@ -405,19 +413,11 @@
 					// Ištraukiame pilną sakinį
 					let containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
 					
-					// Įtraukiame pradžios simbolius (brūkšnys, kabutės)
+					// Patikriname ar sakinys prasideda brūkšniu arba kabutėmis
 					if (sentenceStart > 0) {
 						const prevChar = fullText.charAt(sentenceStart - 1);
-						if (['–', '-', '"', '"'].includes(prevChar)) {
+						if (prevChar === '–' || prevChar === '-' || prevChar === '"') {
 							containingSentence = prevChar + containingSentence;
-						}
-					}
-		
-					// Įtraukiame pabaigos simbolius (kabutės)
-					if (sentenceEnd < fullText.length) {
-						const nextChar = fullText.charAt(sentenceEnd);
-						if (['"', '"'].includes(nextChar)) {
-							containingSentence = containingSentence + nextChar;
 						}
 					}
 		
@@ -441,11 +441,11 @@
 				showStatus('Pažymėkite žodį tekste!', 'error');
 			}
 		}
-		
-		function updateWordsList() {
-			const wordsList = document.getElementById('wordsList');
-			wordsList.innerHTML = selectedWords.map((item, index) => `
-				<div class="selected-word">
+
+        function updateWordsList() {
+            const wordsList = document.getElementById('wordsList');
+            wordsList.innerHTML = selectedWords.map((item, index) => `
+                <div class="selected-word">
                     <strong>${item.word}</strong><br>
                     ${item.sentence}
                     <button onclick="removeWord(${index})" style="background-color: #f44336;">Pašalinti</button>
