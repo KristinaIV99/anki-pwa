@@ -320,9 +320,11 @@
                         const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
                         content = result.value.replace(/<[^>]*>/g, ''); // Pašaliname HTML žymes
                     } else {
-                        // .txt ir .md failams
-                        content = event.target.result;
-                    }
+						// .txt ir .md failams - naudojame TextDecoder su UTF-8
+						const arrayBuffer = event.target.result;
+						const decoder = new TextDecoder('UTF-8');
+						content = decoder.decode(arrayBuffer);
+					}
 
                     pages = splitTextIntoPages(content);
                     currentPageIndex = 0;
@@ -336,11 +338,7 @@
                 }
             };
             
-            if (fileType === 'docx') {
-                reader.readAsArrayBuffer(file);
-            } else {
-                reader.readAsText(file);
-            }
+            reader.readAsArrayBuffer(file);
         });
 
         // Pridedame klaviatūros navigaciją
