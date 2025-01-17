@@ -42,24 +42,41 @@
             line-height: 1.5;
         }
         .pagination-controls {
-			position: sticky;
-			bottom: 0;
-			z-index: 1000; // Pridėti, kad būtų virš kitų elementų
+			position: fixed;
+			top: 20px;
+			left: 0;
+			right: 0;
+			z-index: 1000;
+			display: flex;
+			justify-content: space-between;
+			padding: 0 20px;
+			pointer-events: none; /* Kad fonas nereaguotų į paspaudimus */
 		}
-        .page-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
+		
+		.page-button {
+			background-color: #4CAF50;
+			color: white;
+			padding: 12px 20px;
+			border: none;
+			border-radius: 50px;
+			cursor: pointer;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+			pointer-events: auto; /* Grąžiname mygtukų paspaudimus */
+			transition: transform 0.2s;
+		}
+		
+		.page-button:hover {
+			transform: scale(1.05);
+		}
         .page-info {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            color: #666;
+            display: none;
         }
+		
+		/* Pridedame papildomą padding viršuje konteineriui */
+		.container {
+			padding-top: 80px;
+		}
+		
         h1 {
             text-align: center;
             color: #333;
@@ -195,10 +212,9 @@
         </div>
 
         <div class="pagination-controls">
-            <button class="page-button" onclick="previousPage()">◀ Atgal</button>
-            <div class="page-info">
-                Puslapis <span id="currentPage">1</span> iš <span id="totalPages">1</span>
-            </div>
+            <button class="page-button page-button-left" onclick="previousPage()">◀</button>
+			<button class="page-button page-button-right" onclick="nextPage()">▶</button>
+		</div>
             <button class="page-button" onclick="nextPage()">Pirmyn ▶</button>
         </div>
         
