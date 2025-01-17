@@ -329,27 +329,39 @@
 			const selection = window.getSelection();
 			const selectedText = selection.toString().trim();
 			
-			if (selectedText) {
-				const fullText = pages[currentPageIndex]; // Pakeisti į dabartinį puslapį
+		    if (selectedText) {
+				const fullText = pages[currentPageIndex];
 				
 				if (fullText) {
-					// Randame sakinį, kuriame yra pažymėtas žodis
-					const sentences = fullText.match(/[^.!?]+[.!?]+/g) || [];
-					const containingSentence = sentences.find(sentence => 
-						sentence.includes(selectedText)
-					);
-		
-					if (containingSentence) {
+					// Gauname pažymėto teksto poziciją
+					const selectionStart = selection.anchorOffset;
+					const selectionEnd = selection.focusOffset;
+					
+					// Randame sakinio pradžią (ieškome ankstesnio taško arba sakinio pradžios)
+					let sentenceStart = fullText.lastIndexOf('.', selectionStart);
+					sentenceStart = sentenceStart === -1 ? 0 : sentenceStart + 1;
+					
+					// Randame sakinio pabaigą (ieškome sekančio taško)
+					let sentenceEnd = fullText.indexOf('.', selectionEnd);
+					sentenceEnd = sentenceEnd === -1 ? fullText.length : sentenceEnd + 1;
+					
+					// Ištraukiame pilną sakinį
+					const containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
+					
+					if (containingSentence && containingSentence.includes(selectedText)) {
 						selectedWords.push({
 							word: selectedText,
-							sentence: containingSentence.trim()
+							sentence: containingSentence
 						});
+						
 						updateWordsList();
 						saveToLocalStorage();
 						showStatus('Žodis išsaugotas!', 'success');
 						updateWordCount();
 						
 						selection.removeAllRanges();
+					} else {
+						showStatus('Nepavyko rasti pilno sakinio!', 'error');
 					}
 				}
 			} else {
