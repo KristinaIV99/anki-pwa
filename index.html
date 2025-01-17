@@ -136,8 +136,8 @@
         
         <div id="status"></div>
 
-        <input type="file" id="fileInput" class="file-input" accept=".txt">
-        <label for="fileInput" class="file-label">Įkelti .txt failą</label>
+        <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
+        <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
         
         <div id="textDisplay" class="text-display" contenteditable="false"></div>
         
@@ -149,6 +149,7 @@
     <div id="wordCount"></div>
     <button id="fixedButton" onclick="saveWord()">Išsaugoti žodį</button>
 
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <script>
         let selectedWords = [];
 
@@ -157,20 +158,40 @@
             const file = e.target.files[0];
             if (!file) return;
 
+            const fileType = file.name.split('.').pop().toLowerCase();
             const reader = new FileReader();
-            reader.onload = (event) => {
-                const content = event.target.result;
-                document.getElementById('textDisplay').textContent = content;
-                localStorage.setItem('currentText', content);
-                showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
-                updateWordCount();
+
+            reader.onload = async (event) => {
+                try {
+                    let content = '';
+                    
+                    if (fileType === 'docx') {
+                        const arrayBuffer = event.target.result;
+                        const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+                        content = result.value.replace(/<[^>]*>/g, ''); // Pašaliname HTML žymes
+                    } else {
+                        // .txt ir .md failams
+                        content = event.target.result;
+                    }
+
+                    document.getElementById('textDisplay').textContent = content;
+                    localStorage.setItem('currentText', content);
+                    showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
+                    updateWordCount();
+                } catch (error) {
+                    showStatus('Klaida apdorojant failą: ' + error.message, 'error');
+                }
             };
             
             reader.onerror = () => {
                 showStatus('Klaida skaitant failą!', 'error');
             };
             
-            reader.readAsText(file);
+            if (fileType === 'docx') {
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.readAsText(file);
+            }
         });
 
         function updateWordCount() {
