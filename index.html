@@ -164,7 +164,6 @@
         <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
         <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
 		
-        <!-- Mygtukų grupė -->
         <div class="button-group">
             <button onclick="clearText()" class="danger-button">Ištrinti tekstą</button>
             <button onclick="toggleWordsList()" class="warning-button">Rodyti/Slėpti žodžius</button>
@@ -173,7 +172,6 @@
         
         <div id="textDisplay" class="text-display" contenteditable="false"></div>
         
-        <!-- Žodžių sąrašo konteineris -->
         <div id="wordsListContainer">
             <button onclick="downloadWords()">Atsisiųsti žodžius</button>
             <div id="wordsList"></div>
@@ -187,7 +185,6 @@
     <script>
         let selectedWords = [];
 
-        // Failo įkėlimo apdorojimas
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -232,6 +229,7 @@
             const wordCount = document.getElementById('wordCount');
             wordCount.textContent = `Išsaugota žodžių: ${selectedWords.length}`;
         }
+	
 		// Nauja funkcija teksto išvalymui
 		function clearText() {
 			const textDisplay = document.getElementById('textDisplay');
