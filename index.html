@@ -239,32 +239,26 @@
 
         function splitTextIntoPages(text) {
 			const pages = [];
-			let currentPage = '';
 			let textToSplit = text;
 			
-			// Reguliari išraiška ieško sakinio pabaigos (. arba ! arba ?) po kurio seka tarpas ir didžioji raidė
-			const sentenceEndRegex = /[.!?](?=\s+[A-ZĖĄČĘĖĮŠŲŪŽ]|$)/g;
-			
 			while (textToSplit.length > 0) {
-				// Paimame apytiksliai WORDS_PER_PAGE žodžių
-				let potentialChunk = textToSplit.split(/\s+/).slice(0, WORDS_PER_PAGE).join(' ');
+				// Paimame didesnį teksto gabalą nei reikia, kad užtikrintume pilnus sakinius
+				let chunk = textToSplit.split(/\s+/).slice(0, WORDS_PER_PAGE * 1.5).join(' ');
 				
-				// Randame paskutinį sakinio pabaigos tašką šiame gabale
-				let matches = [...potentialChunk.matchAll(sentenceEndRegex)];
-				let lastSentenceEnd = matches.length > 0 ? matches[matches.length - 1].index + 1 : -1;
-				
-				if (lastSentenceEnd === -1) {
-					// Jei neradom sakinio pabaigos, ieškome toliau tekste
-					matches = [...textToSplit.matchAll(sentenceEndRegex)];
-					lastSentenceEnd = matches.length > 0 ? matches[0].index + 1 : textToSplit.length;
+				// Jei chunk trumpesnis nei likęs tekstas, ieškome paskutinio sakinio pabaigos
+				if (chunk.length < textToSplit.length) {
+					const lastSentence = chunk.match(/[^.!?]*[.!?]["\']?\s*(?=[A-ZĖĄČĘĖĮŠŲŪŽ]|$)/g);
+					if (lastSentence) {
+						// Surandame paskutinio pilno sakinio poziciją
+						const lastIndex = chunk.lastIndexOf(lastSentence[lastSentence.length - 1]);
+						chunk = textToSplit.slice(0, lastIndex + lastSentence[lastSentence.length - 1].length);
+					}
+				} else {
+					chunk = textToSplit;
 				}
 				
-				// Paimame tekstą iki sakinio pabaigos
-				let pageContent = textToSplit.slice(0, lastSentenceEnd);
-				pages.push(pageContent.trim());
-				
-				// Likusį tekstą paruošiame kitam puslapiui
-				textToSplit = textToSplit.slice(lastSentenceEnd).trim();
+				pages.push(chunk.trim());
+				textToSplit = textToSplit.slice(chunk.length).trim();
 			}
 			
 			return pages;
