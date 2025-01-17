@@ -219,24 +219,37 @@
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 
         function splitTextIntoPages(text) {
-            const words = text.split(/\s+/);
-            const pages = [];
-            let currentPage = [];
-            
-            words.forEach((word) => {
-                currentPage.push(word);
-                if (currentPage.length >= WORDS_PER_PAGE) {
-                    pages.push(currentPage.join(' '));
-                    currentPage = [];
-                }
-            });
-            
-            if (currentPage.length > 0) {
-                pages.push(currentPage.join(' '));
-            }
-            
-            return pages;
-        }
+			const pages = [];
+			let currentPage = '';
+			let textToSplit = text;
+			
+			// Reguliari išraiška ieško sakinio pabaigos (. arba ! arba ?) po kurio seka tarpas ir didžioji raidė
+			const sentenceEndRegex = /[.!?](?=\s+[A-ZĖĄČĘĖĮŠŲŪŽ]|$)/g;
+			
+			while (textToSplit.length > 0) {
+				// Paimame apytiksliai WORDS_PER_PAGE žodžių
+				let potentialChunk = textToSplit.split(/\s+/).slice(0, WORDS_PER_PAGE).join(' ');
+				
+				// Randame paskutinį sakinio pabaigos tašką šiame gabale
+				let matches = [...potentialChunk.matchAll(sentenceEndRegex)];
+				let lastSentenceEnd = matches.length > 0 ? matches[matches.length - 1].index + 1 : -1;
+				
+				if (lastSentenceEnd === -1) {
+					// Jei neradom sakinio pabaigos, ieškome toliau tekste
+					matches = [...textToSplit.matchAll(sentenceEndRegex)];
+					lastSentenceEnd = matches.length > 0 ? matches[0].index + 1 : textToSplit.length;
+				}
+				
+				// Paimame tekstą iki sakinio pabaigos
+				let pageContent = textToSplit.slice(0, lastSentenceEnd);
+				pages.push(pageContent.trim());
+				
+				// Likusį tekstą paruošiame kitam puslapiui
+				textToSplit = textToSplit.slice(lastSentenceEnd).trim();
+			}
+			
+			return pages;
+		}
 
         function displayCurrentPage() {
             const textDisplay = document.getElementById('textDisplay');
