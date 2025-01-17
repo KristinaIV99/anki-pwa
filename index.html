@@ -405,22 +405,41 @@
 			showStatus('Tekstas ištrintas!', 'success');
 		}
 	
-		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
+		function getOriginalText(element, selection) {
+			// Gauname tekstą be HTML žymų
+			const originalText = element.textContent;
+			
+			// Gauname pažymėjimo pozicijas
+			const range = selection.getRangeAt(0);
+			const preSelectionRange = range.cloneRange();
+			preSelectionRange.selectNodeContents(element);
+			preSelectionRange.setEnd(range.startContainer, range.startOffset);
+			const start = preSelectionRange.toString().length;
+			
+			// Gauname pažymėtą tekstą iš originalaus teksto
+			const selectedText = selection.toString().trim();
+			return {
+				text: selectedText,
+				start: start,
+				end: start + selectedText.length
+			};
+		}
+		
 		function saveWord() {
 			const selection = window.getSelection();
-			const selectedText = selection.toString().trim();
+			const textDisplay = document.getElementById('textDisplay');
 			
-		    if (selectedText) {
-				const fullText = pages[currentPageIndex];
+			if (selection.rangeCount > 0) {
+				const selectionInfo = getOriginalText(textDisplay, selection);
+				const selectedText = selectionInfo.text;
+				
+				if (selectedText) {
+					const fullText = pages[currentPageIndex];
 				
 				if (fullText) {
-					// Gauname pažymėto teksto poziciją
-					const range = selection.getRangeAt(0);
-					const preSelectionRange = range.cloneRange();
-					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
-					preSelectionRange.setEnd(range.startContainer, range.startOffset);
-					const selectionStart = preSelectionRange.toString().length;
-					const selectionEnd = selectionStart + selectedText.length;
+					// Naudojame pozicijas iš selectionInfo
+					const selectionStart = selectionInfo.start;
+					const selectionEnd = selectionInfo.end;
 		
 					// Funkcija patikrinti ar po sakinio eina dialogas
 					function isDialogueContinuation(text, position) {
