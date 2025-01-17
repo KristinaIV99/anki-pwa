@@ -380,12 +380,26 @@
 						sentenceStart--;
 					}
 		
-					// Randame sakinio pabaigą (ieškome sekančio taško)
+					// Pridedame naują funkciją prieš sentenceEnd paiešką
+					function isNextSentenceStart(text, position) {
+						// Patikriname ar po taško seka '#' arba '–' arba '-'
+						let i = position + 1;
+						while (i < text.length && text[i] === ' ') {
+							i++;
+						}
+						return text[i] === '#' || text[i] === '–' || text[i] === '-';
+					}
+		
+					// Modifikuojame sakinio pabaigos ieškojimą
 					let sentenceEnd = selectionEnd;
 					while (sentenceEnd < fullText.length) {
 						const char = fullText.charAt(sentenceEnd);
 						if (['.', '?', '!'].includes(char)) {
 							sentenceEnd++;
+							// Jei po skiriamojo ženklo seka dialogas arba skyriaus pavadinimas, nutraukiame
+							if (isNextSentenceStart(fullText, sentenceEnd - 1)) {
+								break;
+							}
 							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
 							if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
 								continue;
