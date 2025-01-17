@@ -128,6 +128,31 @@
             font-size: 14px;
             z-index: 1000;
         }
+		
+        /* Nauji stiliai */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .danger-button {
+            background-color: #f44336 !important;
+        }
+        
+        .warning-button {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+        }
+
+        #wordsListContainer {
+            display: none;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
     </style>
 </head>
 <body>
@@ -139,14 +164,20 @@
         <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
         <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
 		
-		<!-- Pridedame teksto išvalymo mygtuką -->
-		<button id="clearTextBtn" onclick="clearText()" style="background-color: #f44336;">Ištrinti tekstą</button>
-		
-		<div id="textDisplay" class="text-display" contenteditable="false"></div>
+        <!-- Mygtukų grupė -->
+        <div class="button-group">
+            <button onclick="clearText()" class="danger-button">Ištrinti tekstą</button>
+            <button onclick="toggleWordsList()" class="warning-button">Rodyti/Slėpti žodžius</button>
+            <button onclick="clearWordsList()" class="danger-button">Išvalyti žodžių sąrašą</button>
+        </div>
         
-        <button onclick="downloadWords()">Atsisiųsti žodžius</button>
+        <div id="textDisplay" class="text-display" contenteditable="false"></div>
         
-        <div id="wordsList"></div>
+        <!-- Žodžių sąrašo konteineris -->
+        <div id="wordsListContainer">
+            <button onclick="downloadWords()">Atsisiųsti žodžius</button>
+            <div id="wordsList"></div>
+        </div>
     </div>
 
     <div id="wordCount"></div>
@@ -278,6 +309,25 @@
             localStorage.setItem('ankiWords', JSON.stringify(selectedWords));
         }
 
+        // Naujos funkcijos
+        function toggleWordsList() {
+            const container = document.getElementById('wordsListContainer');
+            const isHidden = container.style.display === 'none';
+            container.style.display = isHidden ? 'block' : 'none';
+            showStatus(isHidden ? 'Žodžių sąrašas rodomas' : 'Žodžių sąrašas paslėptas', 'success');
+        }
+
+        function clearWordsList() {
+            if (confirm('Ar tikrai norite ištrinti visus išsaugotus žodžius?')) {
+                selectedWords = [];
+                updateWordsList();
+                saveToLocalStorage();
+                updateWordCount();
+                showStatus('Visi žodžiai ištrinti!', 'success');
+            }
+        }
+
+        // Modifikuojame loadFromLocalStorage(), kad pradžioje paslėptų sąrašą
         function loadFromLocalStorage() {
             const savedWords = localStorage.getItem('ankiWords');
             if (savedWords) {
@@ -290,6 +340,9 @@
                 document.getElementById('textDisplay').textContent = savedText;
             }
             updateWordCount();
+            
+            // Pradžioje paslepiame žodžių sąrašą
+            document.getElementById('wordsListContainer').style.display = 'none';
         }
 
         function downloadWords() {
