@@ -51,13 +51,13 @@
             margin: 10px 0;
             background: white;
             white-space: pre-wrap;
-            margin-bottom: 60px;
-            -webkit-touch-callout: default;
+            margin-bottom: 80px;
+            -webkit-touch-callout: none;
             -webkit-user-select: text;
             user-select: text;
             overflow-y: auto;
-            -webkit-tap-highlight-color: rgba(0,0,0,.1);
-            font-size: 16px;
+            -webkit-tap-highlight-color: transparent;
+            font-size: 18px;
             line-height: 1.5;
             touch-action: pan-y pinch-zoom;
         }
@@ -172,32 +172,28 @@
         .nav-button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 15px;
+            padding: 15px 25px;
             border: none;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 16px;
             cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             pointer-events: auto;
-            width: auto;
-            margin: 0;
             opacity: 0.9;
+			touch-action: manipulation;
         }
         
-        .nav-button:hover {
-            opacity: 1;
-        }
-        
+        /* Puslapio informacija */
         .page-info {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
+            background-color: rgba(0, 0, 0, 0.8);
             color: white;
             padding: 8px 16px;
             border-radius: 20px;
-            font-size: 14px;
+            font-size: 16px;
             z-index: 1000;
         }
     </style>
@@ -242,68 +238,161 @@
         let pages = [];
         let touchStartX = 0;
 
-        // Naujas puslapiavimo funkcionalumas
-        function splitTextIntoPages(text) {
-			// Patikriname, ar tekstas nėra tuščias
-			if (!text || text.trim().length === 0) {
-				pages = [];
-				totalPages = 1;
-				currentPage = 1;
-				return;
-			}
+		// Mobilios versijos puslapiavimo logika
+		function initializeMobilePagination() {
+			let textDisplay = document.getElementById('textDisplay');
+			
+			// Touch įvykių klausymasis
+			textDisplay.addEventListener('touchstart', handleTouchStart, false);
+			textDisplay.addEventListener('touchmove', handleTouchMove, false);
+			textDisplay.addEventListener('touchend', handleTouchEnd, false);
 		
-			// Išskaidome tekstą į sakinius
-			const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-			let currentPageText = '';
-			let currentWordCount = 0;
-			pages = []; // Išvalome puslapius
+			let xDown = null;
+			let yDown = null;
+			let touchStartTime = null;
 		
-			for (let sentence of sentences) {
-				// Pašaliname nereikalingus tarpus
-				const trimmedSentence = sentence.trim();
-				// Skaičiuojame žodžius sakinyje
-				const sentenceWordCount = trimmedSentence.split(/\s+/).length;
-		
-				// Tikriname, ar pridėjus šį sakinį neviršysime 250 žodžių limito
-				if (currentWordCount + sentenceWordCount > 250) {
-					// Jei viršijame, išsaugome dabartinį puslapį
-					if (currentPageText.trim().length > 0) {
-						pages.push(currentPageText.trim());
-					}
-					// Pradedame naują puslapį
-					currentPageText = trimmedSentence + ' ';
-					currentWordCount = sentenceWordCount;
-				} else {
-					// Jei neviršijame, pridedame sakinį prie dabartinio puslapio
-					currentPageText += trimmedSentence + ' ';
-					currentWordCount += sentenceWordCount;
-				}
-			}
-		
-			// Pridedame paskutinį puslapį, jei liko teksto
-			if (currentPageText.trim().length > 0) {
-				pages.push(currentPageText.trim());
-			}
-		
-			// Nustatome bendrą puslapių skaičių
-			totalPages = pages.length;
-			// Grįžtame į pirmą puslapį
-			currentPage = 1;
-		
-			console.log(`Sukurti ${totalPages} puslapiai`);
-			showCurrentPage();
-			updatePageInfo();
+			function handleTouchStart(evt) {
+				xDown = evt.touches[0].clientX;
+			yDown = evt.touches[0].clientY;
+				touchStartTime = Date.now();
 		}
-        
-        function showCurrentPage() {
-            document.getElementById('textDisplay').textContent = pages[currentPage - 1] || '';
-            updatePageInfo();
-            saveCurrentState();
-        }
-        
-        function updatePageInfo() {
-            document.getElementById('pageInfo').textContent = `Puslapis ${currentPage} iš ${totalPages}`;
-        }
+		
+			function handleTouchMove(evt) {
+				if (!xDown || !yDown) {
+					return;
+				}
+		
+				evt.preventDefault(); // Sustabdome standartinį slinkimą
+			}
+		
+			function handleTouchEnd(evt) {
+				if (!xDown || !yDown) {
+					return;
+				}
+		
+				let xUp = evt.changedTouches[0].clientX;
+				let yUp = evt.changedTouches[0].clientY;
+				let touchEndTime = Date.now();
+		
+				let xDiff = xDown - xUp;
+				let yDiff = yDown - yUp;
+				let timeDiff = touchEndTime - touchStartTime;
+		
+				// Tikriname, ar gestas buvo pakankamai greitas ir horizontalus
+				if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(xDiff) > 50 && timeDiff < 300) {
+					if (xDiff > 0) {
+						// Braukimas į kairę - sekantis puslapis
+						nextPage();
+					} else {
+						// Braukimas į dešinę - ankstesnis puslapis
+						prevPage();
+					}
+				}
+		
+				xDown = null;
+				yDown = null;
+				touchStartTime = null;
+			}
+		}
+		
+		// Modifikuota splitTextIntoPages funkcija
+        function splitTextIntoPages(text) {
+			try {
+				// Patikriname, ar tekstas nėra tuščias
+				if (!text || text.trim().length === 0) {
+					console.log('Tekstas tuščias');
+					pages = [];
+					totalPages = 1;
+					currentPage = 1;
+					return;
+				}
+
+				// Išvalome tekstą nuo nereikalingų tarpų
+				text = text.replace(/\s+/g, ' ').trim();
+				
+				// Išskaidome tekstą į sakinius
+				let sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+				console.log('Rasta sakinių:', sentences.length);
+		
+				pages = [];
+				let currentPage = '';
+				let wordCount = 0;
+				const WORDS_PER_PAGE = 200; // Sumažiname žodžių skaičių mobilioje versijoje
+		
+				sentences.forEach((sentence) => {
+					const sentenceWordCount = sentence.trim().split(/\s+/).length;
+					
+					if (wordCount + sentenceWordCount > WORDS_PER_PAGE) {
+						if (currentPage) {
+							pages.push(currentPage.trim());
+							currentPage = '';
+							wordCount = 0;
+						}
+					}
+					
+					currentPage += sentence + ' ';
+					wordCount += sentenceWordCount;
+				});
+		
+				// Pridedame paskutinį puslapį
+				if (currentPage.trim()) {
+					pages.push(currentPage.trim());
+				}
+		
+				totalPages = pages.length;
+				currentPage = 1;
+
+				console.log('Sukurti puslapiai:', totalPages);
+				
+				// Iškart rodome pirmą puslapį
+				showCurrentPage();
+				updatePageInfo();
+				
+			} catch (error) {
+				console.error('Klaida skaidant tekstą:', error);
+				showStatus('Klaida apdorojant tekstą', 'error');
+			}
+		}
+
+		// Atnaujinta showCurrentPage funkcija
+		function showCurrentPage() {
+			try {
+				const textDisplay = document.getElementById('textDisplay');
+				if (pages.length > 0 && currentPage <= pages.length) {
+					textDisplay.textContent = pages[currentPage - 1];
+					updatePageInfo();
+					// Išsaugome būseną
+					localStorage.setItem('currentPageNumber', currentPage);
+					localStorage.setItem('pagesContent', JSON.stringify(pages));
+				}
+			} catch (error) {
+				console.error('Klaida rodant puslapį:', error);
+				showStatus('Klaida rodant puslapį', 'error');
+			}
+		}
+		
+		// Inicializavimo funkcija
+		function initializeApp() {
+			initializeMobilePagination();
+			
+			// Bandome atkurti ankstesnę būseną
+			try {
+				const savedPages = localStorage.getItem('pagesContent');
+				const savedPageNumber = localStorage.getItem('currentPageNumber');
+				
+				if (savedPages) {
+					pages = JSON.parse(savedPages);
+					currentPage = parseInt(savedPageNumber) || 1;
+					totalPages = pages.length;
+					showCurrentPage();
+				}
+			} catch (error) {
+				console.error('Klaida atkuriant būseną:', error);
+			}
+		}
+		
+		// Paleisti inicializavimą kai puslapis užkraunamas
+		window.addEventListener('load', initializeApp);
         
         function nextPage() {
             if (currentPage < totalPages) {
