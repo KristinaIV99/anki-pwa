@@ -13,7 +13,6 @@
             padding: 16px;
             padding-bottom: 80px;
             background-color: #f5f5f5;
-            overscroll-behavior-x: none;
         }
         .container {
             max-width: 800px;
@@ -59,7 +58,6 @@
             -webkit-tap-highlight-color: rgba(0,0,0,.1);
             font-size: 16px;
             line-height: 1.5;
-            touch-action: pan-y pinch-zoom;
         }
         button {
             background-color: #4CAF50;
@@ -154,51 +152,6 @@
             border-radius: 8px;
             border: 1px solid #ddd;
             padding: 20px;
-}
-
-        /* Nauji navigacijos stiliai */
-        .navigation-container {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 16px;
-            pointer-events: none;
-            z-index: 1000;
-        }
-        
-        .nav-button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            pointer-events: auto;
-            width: auto;
-            margin: 0;
-            opacity: 0.9;
-        }
-        
-        .nav-button:hover {
-            opacity: 1;
-        }
-        
-        .page-info {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 14px;
-            z-index: 1000;
         }
     </style>
 </head>
@@ -207,7 +160,6 @@
         <h1>Anki žodžių rinkimas</h1>
         
         <div id="status"></div>
-        <div id="pageInfo" class="page-info">Puslapis 1 iš 1</div>
 
         <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
         <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
@@ -229,114 +181,10 @@
     <div id="wordCount"></div>
     <button id="fixedButton" onclick="saveWord()">Išsaugoti žodį</button>
 
-    <div class="navigation-container">
-        <button id="prevPage" class="nav-button">Ankstesnis</button>
-        <button id="nextPage" class="nav-button">Kitas</button>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <script>
         let selectedWords = [];
-        let currentPage = 1;
-        let totalPages = 1;
-        let pages = [];
-        let touchStartX = 0;
 
-        // Naujas puslapiavimo funkcionalumas
-        function splitTextIntoPages(text) {
-            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
-            let currentPageText = '';
-            let currentWordCount = 0;
-            pages = []; // Išvalome puslapius
-		
-			for (let sentence of sentences) {
-				const sentenceWordCount = sentence.trim().split(/\s+/).length;
-				
-				// Jei pridėjus šį sakinį viršysime 250 žodžių, pradedame naują puslapį
-				if (currentWordCount + sentenceWordCount > 250 && currentPageText.length > 0) {
-					pages.push(currentPageText.trim());
-					currentPageText = sentence;
-					currentWordCount = sentenceWordCount;
-				} else {
-					currentPageText += sentence;
-					currentWordCount += sentenceWordCount;
-				}
-			}
-		
-			// Pridedame paskutinį puslapį, jei liko teksto
-			if (currentPageText.trim().length > 0) {
-				pages.push(currentPageText.trim());
-			}
-		
-			totalPages = pages.length;
-			currentPage = 1;
-			showCurrentPage();
-			updatePageInfo();
-		}
-        
-        function showCurrentPage() {
-            document.getElementById('textDisplay').textContent = pages[currentPage - 1] || '';
-            updatePageInfo();
-            saveCurrentState();
-        }
-        
-        function updatePageInfo() {
-            document.getElementById('pageInfo').textContent = `Puslapis ${currentPage} iš ${totalPages}`;
-        }
-        
-        function nextPage() {
-            if (currentPage < totalPages) {
-                currentPage++;
-                showCurrentPage();
-            }
-        }
-        
-        function prevPage() {
-            if (currentPage > 1) {
-                currentPage--;
-                showCurrentPage();
-            }
-        }
-        
-        // Gestų apdorojimas
-        document.addEventListener('touchstart', (e) => {
-            touchStartX = e.touches[0].clientX;
-        });
-
-        document.addEventListener('touchend', (e) => {
-            const touchEndX = e.changedTouches[0].clientX;
-            const diff = touchStartX - touchEndX;
-            
-            if (Math.abs(diff) > 50) {
-                if (diff > 0) {
-                    nextPage();
-                } else {
-                    prevPage();
-                }
-            }
-        });
-        
-        // Mygtukų event listeners
-        document.getElementById('nextPage').addEventListener('click', nextPage);
-        document.getElementById('prevPage').addEventListener('click', prevPage);
-        
-        // Būsenos išsaugojimas
-        function saveCurrentState() {
-            localStorage.setItem('currentPage', currentPage);
-            localStorage.setItem('pages', JSON.stringify(pages));
-        }
-        
-        function loadSavedState() {
-            const savedPages = localStorage.getItem('pages');
-            if (savedPages) {
-                pages = JSON.parse(savedPages);
-                totalPages = pages.length;
-                currentPage = parseInt(localStorage.getItem('currentPage')) || 1;
-                showCurrentPage();
-            }
-        }
-
-        // Esamas funkcionalumas
         document.getElementById('fileInput').addEventListener('change', async (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -357,7 +205,7 @@
                         content = event.target.result;
                     }
 
-                    splitTextIntoPages(content);
+                    document.getElementById('textDisplay').textContent = content;
                     localStorage.setItem('currentText', content);
                     showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
                     updateWordCount();
@@ -387,12 +235,8 @@
 			const textDisplay = document.getElementById('textDisplay');
 			textDisplay.textContent = '';
 			localStorage.removeItem('currentText');
-            pages = [];
-            currentPage = 1;
-            totalPages = 1;
-            updatePageInfo();
-            showStatus('Tekstas ištrintas!', 'success');
-        }
+			showStatus('Tekstas ištrintas!', 'success');
+		}
 	
 		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
 		function saveWord() {
@@ -533,8 +377,7 @@
 
         window.addEventListener('load', () => {
             loadFromLocalStorage();
-            loadSavedState();
-			
+            
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('sw.js')
                     .then(registration => {
