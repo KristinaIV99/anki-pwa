@@ -218,25 +218,53 @@
         let pages = [];
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 
-        function splitTextIntoPages(text) {
-            const words = text.split(/\s+/);
-            const pages = [];
-            let currentPage = [];
-            
-            words.forEach((word) => {
-                currentPage.push(word);
-                if (currentPage.length >= WORDS_PER_PAGE) {
-                    pages.push(currentPage.join(' '));
-                    currentPage = [];
-                }
-            });
-            
-            if (currentPage.length > 0) {
-                pages.push(currentPage.join(' '));
-            }
-            
-            return pages;
-        }
+		function splitTextIntoPages(text) {
+			const pages = [];
+			// Padalinkime tekstą į paragrafus pagal naują eilutę
+			const paragraphs = text.split('\n');
+			let currentPage = [];
+			let currentWordCount = 0;
+			
+			for (let paragraph of paragraphs) {
+				// Jei tai yra skyriaus pavadinimas (prasideda #)
+				if (paragraph.startsWith('#')) {
+					// Jei dabartiniame puslapyje jau yra teksto, užbaikime jį
+					if (currentPage.length > 0) {
+						pages.push(currentPage.join('\n'));
+						currentPage = [];
+						currentWordCount = 0;
+					}
+					// Pradedam naują puslapį su skyriaus pavadinimu
+					currentPage.push(paragraph);
+					continue;
+				}
+		
+				// Jei paragrafas tuščias, pridedame jį ir tęsiame
+				if (paragraph.trim() === '') {
+					currentPage.push(paragraph);
+					continue;
+				}
+		
+			const paragraphWordCount = paragraph.split(/\s+/).length;
+				
+				// Jei pridėjus šį paragrafą viršysime žodžių limitą puslapyje
+				if (currentWordCount + paragraphWordCount > WORDS_PER_PAGE && currentPage.length > 0) {
+					pages.push(currentPage.join('\n'));
+					currentPage = [];
+					currentWordCount = 0;
+				}
+				
+				currentPage.push(paragraph);
+				currentWordCount += paragraphWordCount;
+			}
+			
+			// Pridedame paskutinį puslapį, jei liko teksto
+			if (currentPage.length > 0) {
+				pages.push(currentPage.join('\n'));
+			}
+			
+			return pages;
+		}
 
         function displayCurrentPage() {
             const textDisplay = document.getElementById('textDisplay');
