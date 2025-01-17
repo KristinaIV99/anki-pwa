@@ -239,26 +239,28 @@
 
 		function splitTextIntoPages(text) {
 			const pages = [];
-			let currentPage = '';
-			let textToSplit = text;
+			llet currentPage = '';
 			
 			// Paprastas dalinimas pagal taškus
-			const sentences = text.split(/([.!?]+\s+)/);
-			let currentLength = 0;
+			const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
 			
 			for (let i = 0; i < sentences.length; i++) {
 				const sentence = sentences[i];
-				currentLength += sentence.split(/\s+/).length;
+				const wordCount = (currentPage + sentence).split(/\s+/).filter(word => word.length > 0).length;
 				
-				if (currentLength > WORDS_PER_PAGE) {
-					pages.push(currentPage.trim());
+				if (wordCount > WORDS_PER_PAGE) {
+					// Jei pridėjus naują sakinį viršijame žodžių limitą, 
+					// išsaugome dabartinį puslapį ir pradedam naują
+					if (currentPage) {
+						pages.push(currentPage.trim());
+					}
 					currentPage = sentence;
-					currentLength = sentence.split(/\s+/).length;
 				} else {
 					currentPage += sentence;
 				}
 			}
 			
+			// Pridedame paskutinį puslapį, jei jis turi teksto
 			if (currentPage) {
 				pages.push(currentPage.trim());
 			}
