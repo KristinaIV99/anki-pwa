@@ -330,100 +330,109 @@
 		function clearText() {
 			const textDisplay = document.getElementById('textDisplay');
 			textDisplay.textContent = '';
-			pages = []; // Pridėti šią eilutę
-			currentPageIndex = 0; // Pridėti šią eilutę
-			displayCurrentPage(); // Pridėti šią eilutę
+			pages = []; // Išvalome puslapių masyvą
+			currentPageIndex = 0; // Nustatome dabartinį puslapį į pradžią
+			displayCurrentPage(); // Atnaujiname rodinį
 			localStorage.removeItem('currentText');
 			showStatus('Tekstas ištrintas!', 'success');
 		}
 	
-		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
+		// Patobulinta žodžių išsaugojimo funkcija
 		function saveWord() {
 			const selection = window.getSelection();
 			const selectedText = selection.toString().trim();
 			
 		    if (selectedText) {
-				const fullText = pages[currentPageIndex];
+				showStatus('Pažymėkite žodį tekste!', 'error');
+				return;
+			}
+		
+			const fullText = pages[currentPageIndex];
+			if (fullText) {
+				showStatus('Tekstas nerastas!', 'error');
+				return;
+			}
+		
+			// Gauname pažymėto teksto poziciją
+			const range = selection.getRangeAt(0);
+			const preSelectionRange = range.cloneRange();
+			preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
+			preSelectionRange.setEnd(range.startContainer, range.startOffset);
+			const selectionStart = preSelectionRange.toString().length;
+			const selectionEnd = selectionStart + selectedText.length;
+
+			// Funkcija patikrinti ar po sakinio eina dialogas
+			function isDialogueContinuation(text, position) {
+				if (position >= text.length - 1) return false;
 				
-				if (fullText) {
-					// Gauname pažymėto teksto poziciją
-					const range = selection.getRangeAt(0);
-					const preSelectionRange = range.cloneRange();
-					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
-					preSelectionRange.setEnd(range.startContainer, range.startOffset);
-					const selectionStart = preSelectionRange.toString().length;
-					const selectionEnd = selectionStart + selectedText.length;
+				let i = position + 1;
+				while (i < text.length && [' ', '\n', '\t'].includes(text[i])) {
+					i++;
+				}
+				const nextChar = text.charAt(i);
+				return nextChar && nextChar === nextChar.toLowerCase() && nextChar !== ' ';
+	}
 		
-					// Funkcija patikrinti ar po sakinio eina dialogas
-					function isDialogueContinuation(text, position) {
-						// Patikriname ar po skiriamojo ženklo (?, !) seka žodis iš mažosios raidės
-						const nextChar = text.charAt(position + 1);
-						if (!nextChar) return false;
-						
-						// Praleidžiame tarpus ir brūkšnius
-						let i = position + 1;
-						while (i < text.length && [' ', '–', '-'].includes(text[i])) {
-							i++;
-						}
-						// Jei po to seka mažoji raidė, tai dialogo tęsinys
-						return text[i] && text[i] === text[i].toLowerCase() && text[i] !== ' ';
-					}
-		
-					// Randame sakinio pradžią (ieškome ankstesnio taško arba sakinio pradžios)
-					let sentenceStart = selectionStart;
-					while (sentenceStart > 0) {
-						const char = fullText.charAt(sentenceStart - 1);
-						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
-						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
-							break;
-						}
-						sentenceStart--;
-					}
-		
-					// Randame sakinio pabaigą (ieškome sekančio taško)
-					let sentenceEnd = selectionEnd;
-					while (sentenceEnd < fullText.length) {
-						const char = fullText.charAt(sentenceEnd);
-						if (['.', '?', '!'].includes(char)) {
-							sentenceEnd++;
-							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
-							if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
-								continue;
-							}
-							break;
-						}
-						sentenceEnd++;
-					}
-		
-					// Ištraukiame pilną sakinį
-					let containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
-					
-					// Patikriname ar sakinys prasideda brūkšniu arba kabutėmis
-					if (sentenceStart > 0) {
-						const prevChar = fullText.charAt(sentenceStart - 1);
-						if (prevChar === '–' || prevChar === '-' || prevChar === '"') {
-							containingSentence = prevChar + containingSentence;
-						}
-					}
-		
-					if (containingSentence && containingSentence.includes(selectedText)) {
-						selectedWords.push({
-							word: selectedText,
-							sentence: containingSentence
-						});
-						
-						updateWordsList();
-						saveToLocalStorage();
-						showStatus('Žodis išsaugotas!', 'success');
-						updateWordCount();
-						
-						selection.removeAllRanges();
-					} else {
-						showStatus('Nepavyko rasti pilno sakinio!', 'error');
+			// Randame sakinio pradžią (ieškome ankstesnio taško arba sakinio pradžios)
+			let sentenceStart = selectionStart;
+			while (sentenceStart > 0) {
+				const char = fullText.charAt(sentenceStart - 1);
+				
+				if (['.', '?', '!'].includes(char)) {
+					// Jei po skiriamojo ženklo neseka mažoji raidė, tai sakinio pradžia
+					if (!isLowercaseAfterPunctuation(fullText, sentenceStart - 1)) {
+						break;
 					}
 				}
+				sentenceStart--;
+			}
+
+			// Randame sakinio pabaigą (ieškome sekančio taško)
+			let sentenceEnd = selectionEnd;
+			while (sentenceEnd < fullText.length) {
+				const char = fullText.charAt(sentenceEnd);
+				if (['.', '?', '!'].includes(char)) {
+					sentenceEnd++;
+					if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
+						break;
+					}
+				}
+				sentenceEnd++;
+			}
+
+			// Ištraukiame pilną sakinį
+					let containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
+			
+			// Patikriname ar sakinys prasideda brūkšniu arba kabutėmis
+			if (sentenceStart > 0) {
+				const prevChar = fullText.charAt(sentenceStart - 1);
+				if (['–', '-', '"'].includes(prevChar)) {
+					containingSentence = prevChar + containingSentence;
+				}
+			}
+
+			// Įtraukiame pabaigos simbolius (kabutės)
+			if (sentenceEnd < fullText.length) {
+				const nextChar = fullText.charAt(sentenceEnd);
+				if (['"', '"'].includes(nextChar)) {
+					containingSentence += nextChar;
+				}
+			}
+
+			if (containingSentence && containingSentence.includes(selectedText)) {
+				selectedWords.push({
+					word: selectedText,
+					sentence: containingSentence
+				});
+				
+				updateWordsList();
+				saveToLocalStorage();
+				showStatus('Žodis išsaugotas!', 'success');
+				updateWordCount();
+				
+				selection.removeAllRanges();
 			} else {
-				showStatus('Pažymėkite žodį tekste!', 'error');
+				showStatus('Nepavyko rasti pilno sakinio!', 'error');
 			}
 		}
 
