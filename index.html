@@ -244,33 +244,35 @@
 
         // Naujas puslapiavimo funkcionalumas
         function splitTextIntoPages(text) {
-            const words = text.split(/\s+/);
-            let currentPageWords = [];
+            const sentences = text.match(/[^.!?]+[.!?]+/g) || [];
+            let currentPageText = '';
             let currentWordCount = 0;
-            pages = [];
-            
-            for (let i = 0; i < words.length; i++) {
-                currentPageWords.push(words[i]);
-                currentWordCount++;
-                
-                if (currentWordCount >= 250) {
-                    const currentText = currentPageWords.join(' ');
-                    if (/[.!?]$/.test(currentText)) {
-                        pages.push(currentText);
-                        currentPageWords = [];
-                        currentWordCount = 0;
-                    }
-                }
-            }
-            
-            if (currentPageWords.length > 0) {
-                pages.push(currentPageWords.join(' '));
-            }
-            
-            totalPages = pages.length;
-            updatePageInfo();
-            showCurrentPage();
-        }
+            pages = []; // Išvalome puslapius
+		
+			for (let sentence of sentences) {
+				const sentenceWordCount = sentence.trim().split(/\s+/).length;
+				
+				// Jei pridėjus šį sakinį viršysime 250 žodžių, pradedame naują puslapį
+				if (currentWordCount + sentenceWordCount > 250 && currentPageText.length > 0) {
+					pages.push(currentPageText.trim());
+					currentPageText = sentence;
+					currentWordCount = sentenceWordCount;
+				} else {
+					currentPageText += sentence;
+					currentWordCount += sentenceWordCount;
+				}
+			}
+		
+			// Pridedame paskutinį puslapį, jei liko teksto
+			if (currentPageText.trim().length > 0) {
+				pages.push(currentPageText.trim());
+			}
+		
+			totalPages = pages.length;
+			currentPage = 1;
+			showCurrentPage();
+			updatePageInfo();
+		}
         
         function showCurrentPage() {
             document.getElementById('textDisplay').textContent = pages[currentPage - 1] || '';
