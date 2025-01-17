@@ -334,20 +334,65 @@
 				
 				if (fullText) {
 					// Gauname pažymėto teksto poziciją
-					const selectionStart = selection.anchorOffset;
-					const selectionEnd = selection.focusOffset;
-					
+					const range = selection.getRangeAt(0);
+					const preSelectionRange = range.cloneRange();
+					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
+					preSelectionRange.setEnd(range.startContainer, range.startOffset);
+					const selectionStart = preSelectionRange.toString().length;
+					const selectionEnd = selectionStart + selectedText.length;
+		
+					// Funkcija patikrinti ar po sakinio eina dialogas
+					function isDialogueContinuation(text, position) {
+						// Patikriname ar po skiriamojo ženklo (?, !) seka žodis iš mažosios raidės
+						const nextChar = text.charAt(position + 1);
+						if (!nextChar) return false;
+						
+						// Praleidžiame tarpus ir brūkšnius
+						let i = position + 1;
+						while (i < text.length && [' ', '–', '-'].includes(text[i])) {
+							i++;
+						}
+						// Jei po to seka mažoji raidė, tai dialogo tęsinys
+						return text[i] && text[i] === text[i].toLowerCase() && text[i] !== ' ';
+					}
+		
 					// Randame sakinio pradžią (ieškome ankstesnio taško arba sakinio pradžios)
-					let sentenceStart = fullText.lastIndexOf('.', selectionStart);
-					sentenceStart = sentenceStart === -1 ? 0 : sentenceStart + 1;
-					
+					let sentenceStart = selectionStart;
+					while (sentenceStart > 0) {
+						const char = fullText.charAt(sentenceStart - 1);
+						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
+						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
+							break;
+						}
+						sentenceStart--;
+					}
+		
 					// Randame sakinio pabaigą (ieškome sekančio taško)
-					let sentenceEnd = fullText.indexOf('.', selectionEnd);
-					sentenceEnd = sentenceEnd === -1 ? fullText.length : sentenceEnd + 1;
-					
+					let sentenceEnd = selectionEnd;
+					while (sentenceEnd < fullText.length) {
+						const char = fullText.charAt(sentenceEnd);
+						if (['.', '?', '!'].includes(char)) {
+							sentenceEnd++;
+							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
+							if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
+								continue;
+							}
+							break;
+						}
+						sentenceEnd++;
+					}
+		
 					// Ištraukiame pilną sakinį
-					const containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
+					let containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
 					
+					// Patikriname ar sakinys prasideda brūkšniu arba kabutėmis
+					if (sentenceStart > 0) {
+						const prevChar = fullText.charAt(sentenceStart - 1);
+						if (prevChar === '–' || prevChar === '-' || prevChar === '"') {
+							containingSentence = prevChar + containingSentence;
+						}
+					}
+		
 					if (containingSentence && containingSentence.includes(selectedText)) {
 						selectedWords.push({
 							word: selectedText,
