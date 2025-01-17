@@ -335,14 +335,7 @@
 				pageContent = highlightText(pageContent, word, false);
 			});
 			
-			// Jei yra aktyvus pažymėjimas, paryškinti jį ryškesne spalva
-			const selection = window.getSelection();
-			const selectedText = selection.toString().trim();
-			if (selectedText) {
-				pageContent = highlightText(pageContent, selectedText, true);
-			}
-			
-			textDisplay.innerHTML = pageContent; // Naudojame innerHTML vietoj textContent
+			textDisplay.innerHTML = pageContent;
 			
 			document.getElementById('currentPage').textContent = currentPageIndex + 1;
 			document.getElementById('totalPages').textContent = pages.length;
