@@ -354,6 +354,7 @@
         }
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
+			console.log('Failas pasirinktas'); // NAUJAS log
             const file = e.target.files[0];
             if (!file) return;
 
@@ -362,6 +363,7 @@
 
             reader.onload = async (event) => {
                 try {
+					console.log('Pradedamas failo skaitymas'); // NAUJAS log
                     let content = '';
                     
                     if (fileType === 'docx') {
@@ -374,6 +376,8 @@
 						const decoder = new TextDecoder('UTF-8');
 						content = decoder.decode(arrayBuffer);
 					}
+		
+					console.log('Failo turinys:', content); // NAUJAS log
 			
 					// Patikriname ar turinys nėra tuščias
 					if (!content || content.trim().length === 0) {
