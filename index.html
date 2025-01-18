@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="lt">
 <head>
@@ -256,16 +257,10 @@
 			for (let paragraph of paragraphs) {
 				// Jei tai yra skyriaus pavadinimas (prasideda #)
 				if (paragraph.startsWith('#')) {
-					// Jei dabartiniame puslapyje jau yra teksto, užbaikime jį
-					if (currentPage.length > 0) {
-						pages.push(currentPage.join('\n'));
-						currentPage = [];
-						currentWordCount = 0;
+					// Tiesiog pridedame antraštę prie esamo puslapio
+						currentPage.push(paragraph);
+						continue;
 					}
-					// Pradedam naują puslapį su skyriaus pavadinimu
-					currentPage.push(paragraph);
-					continue;
-				}
 		
 				// Jei paragrafas tuščias, pridedame jį ir tęsiame
 				if (paragraph.trim() === '') {
