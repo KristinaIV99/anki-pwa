@@ -354,7 +354,7 @@
         }
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
-			console.log('Failas pasirinktas'); // NAUJAS log
+			alert('Failas pasirinktas'); // Pakeičiame į alert
             const file = e.target.files[0];
             if (!file) return;
 
@@ -363,7 +363,7 @@
 
             reader.onload = async (event) => {
                 try {
-					console.log('Pradedamas failo skaitymas'); // NAUJAS log
+					alert('Pradedamas failo skaitymas'); // Pakeičiame į alert
                     let content = '';
                     
                     if (fileType === 'docx') {
@@ -377,7 +377,7 @@
 						content = decoder.decode(arrayBuffer);
 					}
 		
-					console.log('Failo turinys:', content); // NAUJAS log
+					alert('Failo turinys gautas'); // Pakeičiame į alert
 			
 					// Patikriname ar turinys nėra tuščias
 					if (!content || content.trim().length === 0) {
