@@ -300,21 +300,38 @@
 				console.error('Nerastas textDisplay elementas');
 				return;
 			}
-			if (!pages || !pages[currentPageIndex]) {
-				console.error('Nėra puslapių arba neteisingas puslapio indeksas');
+		
+			// Jei nėra puslapių, rodome tuščią būseną
+			if (!pages || pages.length === 0) {
+				textDisplay.textContent = ''; // arba galite rodyti kokį nors pradinį tekstą
+				
+				// Atnaujiname puslapių skaičius
+				const currentPageEl = document.getElementById('currentPage');
+				const totalPagesEl = document.getElementById('totalPages');
+				
+				if (currentPageEl) currentPageEl.textContent = '0';
+				if (totalPagesEl) totalPagesEl.textContent = '0';
+				
+				currentPageIndex = 0; // Nustatome indeksą į pradinę poziciją
 				return;
 			}
-            textDisplay.textContent = pages[currentPageIndex] || '';
-			
+		
+			// Įsitikiname, kad currentPageIndex yra validus
+			if (currentPageIndex >= pages.length) {
+				currentPageIndex = pages.length - 1;
+			}
+			if (currentPageIndex < 0) {
+				currentPageIndex = 0;
+			}
+		
+			textDisplay.textContent = pages[currentPageIndex];
+		
+			// Atnaujiname puslapių skaičius
 			const currentPageEl = document.getElementById('currentPage');
 			const totalPagesEl = document.getElementById('totalPages');
-			
-			if (currentPageEl) {
-				currentPageEl.textContent = currentPageIndex + 1;
-			}
-			if (totalPagesEl) {
-				totalPagesEl.textContent = pages.length;
-			}
+		
+			if (currentPageEl) currentPageEl.textContent = currentPageIndex + 1;
+			if (totalPagesEl) totalPagesEl.textContent = pages.length;
 		}
 
         function nextPage() {
