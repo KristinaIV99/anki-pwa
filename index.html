@@ -465,9 +465,12 @@
 						if (char === '\n') {
 							const prevChar = fullText.charAt(sentenceEnd - 1);
 							// Jei prieš naują eilutę buvo kablelis, žodis arba markdown žymėjimas
-							if (prevChar === ',' || !/[.!?]/.test(prevChar)) {
+							if (prevChar === ',' || 
+								!/[.!?]/.test(prevChar) || 
+								['', '', '~', ',', ','].includes(prevChar)) {
 								// Jei tai eilutės pabaiga be skiriamojo ženklo arba su markdown žymėjimu
-								if (!/[.!?]/.test(prevChar) && /\w/.test(prevChar)) {
+								if (!/[.!?]/.test(prevChar) && 
+									(/\w/.test(prevChar) || ['', '', '~', ',', ','].includes(prevChar))) {
 									break;
 								}
 							}
