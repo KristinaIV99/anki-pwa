@@ -478,7 +478,7 @@
 								if (!/[.!?]/.test(prevChar) && 
 									(/\w/.test(prevChar) || 
 									['*', '_', '~', '_,', '*,'].includes(prevChar) ||
-									(prevChar === ',' && prevPrevChar === '_'))) {  // Pridėta nauja sąlyga
+									(prevChar === ',' && prevPrevChar === '_')) {
 									
 									console.log('Antra sąlyga praėjo, sustojame');
 									break;
