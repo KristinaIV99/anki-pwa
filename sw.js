@@ -1,25 +1,29 @@
 const CACHE_NAME = 'anki-cache-v1';
 const urlsToCache = [
-  '/anki-pwa/',
-  '/anki-pwa/index.html',
-  '/anki-pwa/manifest.json',
-  '/anki-pwa/style.css',
-  'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js'
+    '/anki-pwa/',
+    '/anki-pwa/index.html',
+    '/anki-pwa/manifest.json',
+    '/anki-pwa/style.css',
+    'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js'
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache)
-          .catch(error => {
-            console.error('Failed to cache resources:', error);
-            // Čia svarbu, kad klaida būtų perduodama toliau
-            throw error;
-          });
-      })
-  );
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('Opened cache');
+                return Promise.all(
+                    urlsToCache.map(url => 
+                        cache.add(url).catch(error => 
+                            console.error(`Failed to cache ${url}:`, error)
+                        )
+                    )
+                );
+            })
+            .catch(error => {
+                console.error('Failed to cache resources:', error);
+            })
+    );
 });
 
 self.addEventListener('fetch', event => {
