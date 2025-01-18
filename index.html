@@ -465,7 +465,7 @@
 						if (char === '\n') {
 							const prevChar = fullText.charAt(sentenceEnd - 1);
 							// Jei prieš naują eilutę buvo kablelis, žodis arba markdown žymėjimas
-        if (				if (prevChar === ',' ||
+							if (prevChar === ',' ||
 								!/[.!?]/.test(prevChar) || 
 								['*', '_', '~'].includes(prevChar)) {
 								// Jei tai eilutės pabaiga be skiriamojo ženklo arba su markdown žymėjimu
