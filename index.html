@@ -463,6 +463,14 @@
 						const char = fullText.charAt(sentenceEnd);
 						// Sustojame ties naujos eilutės ženklu
 						if (char === '\n') {
+							const prevChar = fullText.charAt(sentenceEnd - 1);
+							// Jei prieš naują eilutę buvo kablelis arba tiesiog žodis, priimame kaip sakinio dalį
+							if (prevChar === ',' || !/[.!?]/.test(prevChar)) {
+								// Jei tai eilutės pabaiga be skiriamojo ženklo, priimame ją
+								if (!/[.!?]/.test(prevChar) && /\w/.test(prevChar)) {
+									break;
+								}
+							}
 							// Grįžtame atgal iki paskutinio skiriamojo ženklo
 							while (sentenceEnd > 0 && !['.', '?', '!'].includes(fullText.charAt(sentenceEnd - 1))) {
 								sentenceEnd--;
