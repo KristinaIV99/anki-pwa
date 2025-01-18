@@ -268,7 +268,7 @@
 					continue;
 				}
 		
-			const paragraphWordCount = paragraph.split(/\s+/).length;
+				const paragraphWordCount = paragraph.split(/\s+/).length;
 				
 				// Jei pridėjus šį paragrafą viršysime žodžių limitą puslapyje
 				if (currentWordCount + paragraphWordCount > WORDS_PER_PAGE && currentPage.length > 0) {
@@ -285,6 +285,8 @@
 			if (currentPage.length > 0) {
 				pages.push(currentPage.join('\n'));
 			}
+		
+			console.log(pages); // Štai čia pridedame console.log
 			
 			return pages;
 		}
