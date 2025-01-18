@@ -3,7 +3,6 @@ const urlsToCache = [
     '/anki-pwa/',
     '/anki-pwa/index.html',
     '/anki-pwa/manifest.json',
-    '/anki-pwa/style.css',
     'https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js'
 ];
 
