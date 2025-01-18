@@ -467,10 +467,10 @@
 							// Jei prieš naują eilutę buvo kablelis, žodis arba markdown žymėjimas
 							if (prevChar === ',' ||
 								!/[.!?]/.test(prevChar) || 
-								['*', '_', '~'].includes(prevChar)) {
+								['*', '_', '~', '_,', '*,'].includes(prevChar)) {
 								// Jei tai eilutės pabaiga be skiriamojo ženklo arba su markdown žymėjimu
 								if (!/[.!?]/.test(prevChar) && 
-									(/\w/.test(prevChar) || ['*', '_', '~'].includes(prevChar))) {
+									(/\w/.test(prevChar) || ['*', '_', '~', '_,', '*,'].includes(prevChar))) {
 									break;
 								}
 							}
