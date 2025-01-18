@@ -414,6 +414,10 @@
 					let sentenceStart = selectionStart;
 					while (sentenceStart > 0) {
 						const char = fullText.charAt(sentenceStart - 1);
+						// Sustojame ties naujos eilutės ženklu
+						if (char === '\n') {
+							break;
+						}
 						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
 						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
 							break;
@@ -425,6 +429,14 @@
 					let sentenceEnd = selectionEnd;
 					while (sentenceEnd < fullText.length) {
 						const char = fullText.charAt(sentenceEnd);
+						// Sustojame ties naujos eilutės ženklu
+						if (char === '\n') {
+							// Grįžtame atgal iki paskutinio skiriamojo ženklo
+							while (sentenceEnd > 0 && !['.', '?', '!'].includes(fullText.charAt(sentenceEnd - 1))) {
+								sentenceEnd--;
+							}
+							break;
+						}
 						if (['.', '?', '!'].includes(char)) {
 							sentenceEnd++;
 							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
