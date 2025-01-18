@@ -1,12 +1,13 @@
 {
-    "name": "Anki žodžių rinkimas",
-    "short_name": "Anki",
-    "start_url": "index.html",
-    "display": "standalone",
-    "background_color": "#ffffff",
-    "description": "Programa Anki žodžių rinkimui",
-    "theme_color": "#4CAF50",
-    "icons": [
+  "name": "Anki žodžių rinkimas",
+  "short_name": "Anki",
+  "start_url": "/anki-pwa/index.html",
+  "scope": "/anki-pwa/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "description": "Programa Anki žodžių rinkimui",
+  "theme_color": "#4CAF50",
+  "icons": [
         {
             "src": "icon-192.png",
             "sizes": "192x192",
