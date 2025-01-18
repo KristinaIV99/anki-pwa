@@ -296,11 +296,26 @@
 
         function displayCurrentPage() {
             const textDisplay = document.getElementById('textDisplay');
+			if (!textDisplay) {
+				console.error('Nerastas textDisplay elementas');
+				return;
+			}
+			if (!pages || !pages[currentPageIndex]) {
+				console.error('Nėra puslapių arba neteisingas puslapio indeksas');
+				return;
+			}
             textDisplay.textContent = pages[currentPageIndex] || '';
-            
-            document.getElementById('currentPage').textContent = currentPageIndex + 1;
-            document.getElementById('totalPages').textContent = pages.length;
-        }
+			
+			const currentPageEl = document.getElementById('currentPage');
+			const totalPagesEl = document.getElementById('totalPages');
+			
+			if (currentPageEl) {
+				currentPageEl.textContent = currentPageIndex + 1;
+			}
+			if (totalPagesEl) {
+				totalPagesEl.textContent = pages.length;
+			}
+		}
 
         function nextPage() {
             if (currentPageIndex < pages.length - 1) {
@@ -337,18 +352,35 @@
 						const decoder = new TextDecoder('UTF-8');
 						content = decoder.decode(arrayBuffer);
 					}
-
-                    pages = splitTextIntoPages(content);
-                    currentPageIndex = 0;
-                    displayCurrentPage();
-                    
-                    localStorage.setItem('currentText', content);
-                    showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
-                    updateWordCount();
-                } catch (error) {
-                    showStatus('Klaida apdorojant failą: ' + error.message, 'error');
-                }
-            };
+			
+					// Patikriname ar turinys nėra tuščias
+					if (!content || content.trim().length === 0) {
+						throw new Error('Failas yra tuščias');
+					}
+			
+					// Patikriname ar elementas egzistuoja
+					const textDisplay = document.getElementById('textDisplay');
+					if (!textDisplay) {
+						throw new Error('Nerastas tekstui skirtas elementas');
+					}
+			
+					pages = splitTextIntoPages(content);
+					currentPageIndex = 0;
+					
+					// Patikriname ar puslapiai buvo sukurti
+					if (!pages || pages.length === 0) {
+						throw new Error('Nepavyko sukurti puslapių iš teksto');
+					}
+			
+					displayCurrentPage();
+					localStorage.setItem('currentText', content);
+					showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
+					updateWordCount();
+				} catch (error) {
+					console.error('Detalesnė klaida:', error);
+					showStatus('Klaida apdorojant failą: ' + error.message, 'error');
+				}
+			};
             
             reader.readAsArrayBuffer(file);
         });
