@@ -431,12 +431,12 @@
 						const char = fullText.charAt(sentenceEnd);
 						// Sustojame ties naujos eilutės ženklu
 						if (char === '\n') {
-							/ Grįžtame atgal iki paskutinio skiriamojo ženklo
+							// Grįžtame atgal iki paskutinio skiriamojo ženklo
 							while (sentenceEnd > 0 && !['.', '?', '!'].includes(fullText.charAt(sentenceEnd - 1))) {
 								sentenceEnd--;
+							}
+							break;
 						}
-						break;
-					}
 						if (['.', '?', '!'].includes(char)) {
 							sentenceEnd++;
 							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
