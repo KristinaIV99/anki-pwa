@@ -250,13 +250,11 @@
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 
 		function splitTextIntoPages(text) {
-			console.log('splitTextIntoPages pradeda veikti su tekstu:', text);  // NAUJAS
-			console.log('Ar tekstas yra string tipo?', typeof text === 'string'); // NAUJAS
-		
+			console.log('1. Funkcija prasidėjo');  // Pridėtas console.log
 			const pages = [];
 			// Padalinkime tekstą į paragrafus pagal naują eilutę
 			const paragraphs = text.split('\n');
-			console.log('Paragrafai po split:', paragraphs); // Naujas log
+			console.log('2. Paragrafų skaičius:', paragraphs.length);  // Pridėtas console.log
 		
 			let currentPage = [];
 			let currentWordCount = 0;
@@ -266,19 +264,21 @@
 				
 				// Jei tai yra skyriaus pavadinimas (prasideda #)
 				if (paragraph.startsWith('#')) {
-					console.log('Rastas skyriaus pavadinimas:', paragraph); // Naujas log
+					console.log('4. Rastas skyriaus pavadinimas:', paragraph);  // Pridėtas console.log
 					currentPage.push(paragraph);
 					continue;
 				}
 		
 				// Jei paragrafas tuščias, pridedame jį ir tęsiame
 				if (paragraph.trim() === '') {
+					console.log('5. Rastas tuščias paragrafas');  // Pridėtas console.log
 					currentPage.push(paragraph);
 					continue;
 				}
 		
 				const paragraphWordCount = paragraph.split(/\s+/).length;
-				
+				console.log('6. Žodžių skaičius paragrafe:', paragraphWordCount);  // Pridėtas console.log
+
 				// Jei pridėjus šį paragrafą viršysime žodžių limitą puslapyje
 				if (currentWordCount + paragraphWordCount > WORDS_PER_PAGE && currentPage.length > 0) {
 					console.log('Kuriamas naujas puslapis, nes viršytas žodžių limitas'); // Naujas log
@@ -293,12 +293,11 @@
 			
 			// Pridedame paskutinį puslapį, jei liko teksto
 			if (currentPage.length > 0) {
-				console.log('Pridedamas paskutinis puslapis'); // Naujas log
+				console.log('8. Pridedamas paskutinis puslapis');  // Pridėtas console.log
 				pages.push(currentPage.join('\n'));
 			}
 		
-			console.log(pages); // Štai čia pridedame console.log
-			
+			console.log('9. Galutinis rezultatas:', pages);  // Pridėtas console.log
 			return pages;
 		}
 
