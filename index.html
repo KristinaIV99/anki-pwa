@@ -248,19 +248,25 @@
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 
 		function splitTextIntoPages(text) {
+			console.log('Funkcija prasidėjo, gautas tekstas:', text); // Naujas log
+		
 			const pages = [];
 			// Padalinkime tekstą į paragrafus pagal naują eilutę
 			const paragraphs = text.split('\n');
+			console.log('Paragrafai po split:', paragraphs); // Naujas log
+		
 			let currentPage = [];
 			let currentWordCount = 0;
 			
 			for (let paragraph of paragraphs) {
+				console.log('Apdorojamas paragrafas:', paragraph); // Naujas log
+				
 				// Jei tai yra skyriaus pavadinimas (prasideda #)
 				if (paragraph.startsWith('#')) {
-					// Tiesiog pridedame antraštę prie esamo puslapio
-						currentPage.push(paragraph);
-						continue;
-					}
+					console.log('Rastas skyriaus pavadinimas:', paragraph); // Naujas log
+					currentPage.push(paragraph);
+					continue;
+				}
 		
 				// Jei paragrafas tuščias, pridedame jį ir tęsiame
 				if (paragraph.trim() === '') {
@@ -272,6 +278,7 @@
 				
 				// Jei pridėjus šį paragrafą viršysime žodžių limitą puslapyje
 				if (currentWordCount + paragraphWordCount > WORDS_PER_PAGE && currentPage.length > 0) {
+					console.log('Kuriamas naujas puslapis, nes viršytas žodžių limitas'); // Naujas log
 					pages.push(currentPage.join('\n'));
 					currentPage = [];
 					currentWordCount = 0;
@@ -283,6 +290,7 @@
 			
 			// Pridedame paskutinį puslapį, jei liko teksto
 			if (currentPage.length > 0) {
+				console.log('Pridedamas paskutinis puslapis'); // Naujas log
 				pages.push(currentPage.join('\n'));
 			}
 		
