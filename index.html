@@ -464,10 +464,13 @@
 						// Sustojame ties naujos eilutės ženklu
 						if (char === '\n') {
 							const prevChar = fullText.charAt(sentenceEnd - 1);
-							// Jei prieš naują eilutę buvo kablelis arba tiesiog žodis, priimame kaip sakinio dalį
-							if (prevChar === ',' || !/[.!?]/.test(prevChar)) {
-								// Jei tai eilutės pabaiga be skiriamojo ženklo, priimame ją
-								if (!/[.!?]/.test(prevChar) && /\w/.test(prevChar)) {
+							// Jei prieš naują eilutę buvo kablelis, žodis arba markdown žymėjimas
+        if (				if (prevChar === ',' ||
+								!/[.!?]/.test(prevChar) || 
+								['*', '_', '~'].includes(prevChar)) {
+								// Jei tai eilutės pabaiga be skiriamojo ženklo arba su markdown žymėjimu
+								if (!/[.!?]/.test(prevChar) && 
+									(/\w/.test(prevChar) || ['*', '_', '~'].includes(prevChar))) {
 									break;
 								}
 							}
