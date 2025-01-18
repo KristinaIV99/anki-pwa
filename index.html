@@ -250,7 +250,8 @@
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 
 		function splitTextIntoPages(text) {
-			console.log('Funkcija prasidėjo, gautas tekstas:', text); // Naujas log
+			console.log('splitTextIntoPages pradeda veikti su tekstu:', text);  // NAUJAS
+			console.log('Ar tekstas yra string tipo?', typeof text === 'string'); // NAUJAS
 		
 			const pages = [];
 			// Padalinkime tekstą į paragrafus pagal naują eilutę
@@ -392,6 +393,7 @@
 						throw new Error('Nerastas tekstui skirtas elementas');
 					}
 			
+					alert('Bandome iškviesti splitTextIntoPages');
 					pages = splitTextIntoPages(content);
 					currentPageIndex = 0;
 					
