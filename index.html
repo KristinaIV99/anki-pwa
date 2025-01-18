@@ -464,16 +464,23 @@
 						// Sustojame ties naujos eilutės ženklu
 						if (char === '\n') {
 							const prevChar = fullText.charAt(sentenceEnd - 1);
+							const prevPrevChar = fullText.charAt(sentenceEnd - 2);
 							console.log('Rastas simbolis prieš naują eilutę:', prevChar); // Pridėta debug eilutė
 							// Jei prieš naują eilutę buvo kablelis, žodis arba markdown žymėjimas
 							if (prevChar === ',' ||
 								!/[.!?]/.test(prevChar) || 
 								['*', '_', '~', '_,', '*,'].includes(prevChar)) {
+								(prevChar === ',' && prevPrevChar === '_')) {  // Pridėta nauja sąlyga
+								
 								console.log('Pirma sąlyga praėjo su simboliu:', prevChar); // Pridėta debug eilutė
+								
 								// Jei tai eilutės pabaiga be skiriamojo ženklo arba su markdown žymėjimu
 								if (!/[.!?]/.test(prevChar) && 
-									(/\w/.test(prevChar) || ['*', '_', '~', '_,', '*,'].includes(prevChar))) {
-									console.log('Antra sąlyga praėjo, sustojame'); // Pridėta debug eilutė
+									(/\w/.test(prevChar) || 
+									['*', '_', '~', '_,', '*,'].includes(prevChar) ||
+									(prevChar === ',' && prevPrevChar === '_'))) {  // Pridėta nauja sąlyga
+									
+									console.log('Antra sąlyga praėjo, sustojame');
 									break;
 								}
 							}
