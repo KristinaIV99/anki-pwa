@@ -477,15 +477,39 @@
             wordCount.textContent = `Išsaugota žodžių: ${selectedWords.length}`;
         }
 	
-		// Nauja funkcija teksto išvalymui
 		function clearText() {
 			const textDisplay = document.getElementById('textDisplay');
+			const canvas = document.getElementById('highlightLayer');
+			const ctx = canvas.getContext('2d');
+			
 			textDisplay.textContent = '';
-			pages = []; // Pridėti šią eilutę
-			currentPageIndex = 0; // Pridėti šią eilutę
-			displayCurrentPage(); // Pridėti šią eilutę
+			// Išvalome canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			pages = [];
+			currentPageIndex = 0;
+			displayCurrentPage();
 			localStorage.removeItem('currentText');
 			showStatus('Tekstas ištrintas!', 'success');
+		}
+	
+		function highlightWord(range) {
+			const canvas = document.getElementById('highlightLayer');
+			const ctx = canvas.getContext('2d');
+			const textDiv = document.getElementById('textDisplay');
+			
+			// Gauname pažymėto teksto koordinates
+			const rect = range.getBoundingClientRect();
+			const divRect = textDiv.getBoundingClientRect();
+			
+			// Piešiame geltoną foną
+			ctx.fillStyle = 'rgba(255, 235, 59, 0.5)'; // Geltona, pusiau permatoma
+			ctx.fillRect(
+				rect.left - divRect.left,  // x pozicija
+				rect.top - divRect.top,    // y pozicija
+				rect.width,                // plotis
+				rect.height                // aukštis
+			);
 		}
 	
 		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
@@ -497,8 +521,11 @@
 				const fullText = pages[currentPageIndex];
 				
 				if (fullText) {
-					// Gauname pažymėto teksto poziciją
+					// Pridedame pažymėjimą canvas'e
 					const range = selection.getRangeAt(0);
+					highlightWord(range);
+		
+					// Gauname pažymėto teksto poziciją
 					const preSelectionRange = range.cloneRange();
 					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
 					preSelectionRange.setEnd(range.startContainer, range.startOffset);
