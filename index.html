@@ -283,7 +283,7 @@
 					return;
 				}
 		
-				const content = textDisplay.innerHTML;
+				const content = textDisplay.textContent;
 				if (!currentText) {
 					console.error('Tekstas tuščias');
 					return;
@@ -473,7 +473,7 @@
 					}
 			
 					displayCurrentPage();
-					localStorage.setItem('currentText', content);
+					localStorage.setItem('pages', JSON.stringify(pages)); // Išsaugome puslapius vietoj currentText
 					showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
 					updateWordCount();
 				} catch (error) {
