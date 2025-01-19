@@ -277,8 +277,12 @@
 	
 		function highlightWord(word) {
 			const textDisplay = document.getElementById('textDisplay');
+			if (!textDisplay) return; // Patikriname ar elementas egzistuoja
+			
 			const content = textDisplay.innerHTML;
-			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters
+			if (!content) return; // Patikriname ar turinys nėra tuščias
+			
+			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			
 			// Patikriname ar žodis jau nėra pažymėtas
 			const spanRegex = new RegExp(`<span class="highlighted-.*?">${escapedWord}</span>`, 'gi');
