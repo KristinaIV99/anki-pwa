@@ -375,6 +375,16 @@
 		
 			// Inicializuojame canvas
 			initializeCanvas();
+			
+			// Paieškome ir pažymime visus išsaugotus žodžius šiame puslapyje
+			const fullText = pages[currentPageIndex];
+			if (fullText && selectedWords.length > 0) {
+				selectedWords.forEach(item => {
+					if (fullText.includes(item.word)) {
+						highlightSavedWord(item.word);
+					}
+				});
+			}
 		}
 
         function nextPage() {
@@ -402,6 +412,21 @@
 			
 			// Išvalome canvas
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
+
+		function highlightSavedWord(word) {
+			const textDisplay = document.getElementById('textDisplay');
+			const text = textDisplay.textContent;
+			const range = document.createRange();
+			const textNode = textDisplay.firstChild;
+			
+			let startPos = text.indexOf(word);
+			while (startPos !== -1) {
+				range.setStart(textNode, startPos);
+				range.setEnd(textNode, startPos + word.length);
+				highlightWord(range);
+				startPos = text.indexOf(word, startPos + 1);
+			}
 		}
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
