@@ -192,6 +192,17 @@
             font-size: 14px;
             z-index: 1000;
         }
+	    .highlighted-primary {
+			background-color: #fff59d;  /* ryškesnė geltona */
+			padding: 2px;
+			border-radius: 2px;
+		}
+		
+		.highlighted-secondary {
+			background-color: rgba(255, 245, 157, 0.5);  /* šviesesnė geltona */
+			padding: 2px;
+			border-radius: 2px;
+		}
 		
         /* Nauji stiliai */
         .button-group {
@@ -263,7 +274,23 @@
         let currentPageIndex = 0;
         let pages = [];
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
-
+	
+		function highlightWord(word) {
+			const textDisplay = document.getElementById('textDisplay');
+			const text = textDisplay.textContent;
+			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters
+			const regex = new RegExp(`(${escapedWord})`, 'gi');
+			
+			let isFirst = true;
+			const highlightedText = text.replace(regex, (match) => {
+				const className = isFirst ? 'highlighted-primary' : 'highlighted-secondary';
+				isFirst = false;
+				return `<span class="${className}">${match}</span>`;
+			});
+			
+			textDisplay.innerHTML = highlightedText;
+		}
+	
 		function splitTextIntoPages(text) {
 			console.log('1. Funkcija prasidėjo');  // Pridėtas console.log
 			const pages = [];
@@ -551,6 +578,8 @@
 							word: selectedText,
 							sentence: containingSentence
 						});
+						
+						highlightWord(selectedText);
 						
 						updateWordsList();
 						saveToLocalStorage();
