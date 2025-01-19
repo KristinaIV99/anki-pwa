@@ -276,31 +276,32 @@
         const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
 	
 		function highlightWord(word) {
-			const textDisplay = document.getElementById('textDisplay');
-			if (!textDisplay) return; // Patikriname ar elementas egzistuoja
-			
-			const content = textDisplay.innerHTML;
-			if (!content) return; // Patikriname ar turinys nėra tuščias
-			
-			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			
-			// Patikriname ar žodis jau nėra pažymėtas
-			const spanRegex = new RegExp(`<span class="highlighted-.*?">${escapedWord}</span>`, 'gi');
-			if (content.match(spanRegex)) {
-				return; // Jei žodis jau pažymėtas, nieko nedarome
+			try {
+				const textDisplay = document.getElementById('textDisplay');
+				if (!textDisplay) {
+					console.error('Nerastas textDisplay elementas');
+					return;
+				}
+		
+				const content = textDisplay.innerHTML;
+				if (!currentText) {
+					console.error('Tekstas tuščias');
+					return;
+				}
+		
+				// Apsaugome žodį nuo specialių simbolių
+				const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+				
+				// Pakeičiame žodį į pažymėtą versiją
+				const highlightedText = currentText.replace(
+					new RegExp(escapedWord, 'g'),
+					`<span class="highlighted-primary">${word}</span>`
+				);
+		
+				textDisplay.innerHTML = highlightedText;
+			} catch (error) {
+				console.error('Klaida highlightWord funkcijoje:', error);
 			}
-			
-			// Ieškome tik nepažymėtų žodžio pasikartojimų
-			const regex = new RegExp(`(?<!<[^>]*)(${escapedWord})(?![^<]*>)`, 'gi');
-			let isFirst = true;
-			
-			const highlightedText = text.replace(regex, (match) => {
-				const className = isFirst ? 'highlighted-primary' : 'highlighted-secondary';
-				isFirst = false;
-				return `<span class="${className}">${match}</span>`;
-			});
-			
-			textDisplay.innerHTML = highlightedText;
 		}
 	
 		function splitTextIntoPages(text) {
@@ -356,51 +357,59 @@
 		}
 
         function displayCurrentPage() {
-            const textDisplay = document.getElementById('textDisplay');
-			if (!textDisplay) {
-				console.error('Nerastas textDisplay elementas');
-				return;
-			}
+			try {  // Pridedame try-catch kad sugautume klaidas
+				const textDisplay = document.getElementById('textDisplay');
+				if (!textDisplay) {
+					console.error('Nerastas textDisplay elementas');
+					return;
+				}
+			
+				// Jei nėra puslapių, rodome tuščią būseną
+				if (!pages || pages.length === 0) {
+					textDisplay.textContent = ''; // arba galite rodyti kokį nors pradinį tekstą
+					
+					// Atnaujiname puslapių skaičius
+					const currentPageEl = document.getElementById('currentPage');
+					const totalPagesEl = document.getElementById('totalPages');
+					
+					if (currentPageEl) currentPageEl.textContent = '0';
+					if (totalPagesEl) totalPagesEl.textContent = '0';
+					
+					currentPageIndex = 0; // Nustatome indeksą į pradinę poziciją
+					return;
+				}
 		
-			// Jei nėra puslapių, rodome tuščią būseną
-			if (!pages || pages.length === 0) {
-				textDisplay.textContent = ''; // arba galite rodyti kokį nors pradinį tekstą
-				
+				// Įsitikiname, kad currentPageIndex yra validus
+				if (currentPageIndex >= pages.length) {
+					currentPageIndex = pages.length - 1;
+				}
+				if (currentPageIndex < 0) {
+					currentPageIndex = 0;
+				}
+			
+				textDisplay.textContent = pages[currentPageIndex];
+			
+				if (selectedWords && selectedWords.length > 0) {
+					selectedWords.forEach(item => {
+						if (item.word) {
+							try {
+								highlightWord(item.word);
+							} catch (error) {
+								console.error('Klaida žymint žodį:', item.word, error);
+							}
+						}
+					}
+				}
+			
 				// Atnaujiname puslapių skaičius
 				const currentPageEl = document.getElementById('currentPage');
 				const totalPagesEl = document.getElementById('totalPages');
-				
-				if (currentPageEl) currentPageEl.textContent = '0';
-				if (totalPagesEl) totalPagesEl.textContent = '0';
-				
-				currentPageIndex = 0; // Nustatome indeksą į pradinę poziciją
-				return;
+			
+				if (currentPageEl) currentPageEl.textContent = currentPageIndex + 1;
+				if (totalPagesEl) totalPagesEl.textContent = pages.length;
+			} catch (error) {
+				console.error('Klaida displayCurrentPage funkcijoje:', error);
 			}
-		
-			// Įsitikiname, kad currentPageIndex yra validus
-			if (currentPageIndex >= pages.length) {
-				currentPageIndex = pages.length - 1;
-			}
-			if (currentPageIndex < 0) {
-				currentPageIndex = 0;
-			}
-		
-			textDisplay.textContent = pages[currentPageIndex];
-		
-			if (selectedWords && selectedWords.length > 0) {
-				selectedWords.forEach(item => {
-					if (item.word) {
-						highlightWord(item.word);
-					}
-				});
-			}
-		
-			// Atnaujiname puslapių skaičius
-			const currentPageEl = document.getElementById('currentPage');
-			const totalPagesEl = document.getElementById('totalPages');
-		
-			if (currentPageEl) currentPageEl.textContent = currentPageIndex + 1;
-			if (totalPagesEl) totalPagesEl.textContent = pages.length;
 		}
 
         function nextPage() {
@@ -599,7 +608,12 @@
 							sentence: containingSentence
 						});
 						
-						highlightWord(selectedText);
+						// Tada pažymime
+						try {
+							highlightWord(selectedText);
+						} catch (error) {
+							console.error('Klaida žymint žodį:', error);
+						}
 						
 						updateWordsList();
 						saveToLocalStorage();
