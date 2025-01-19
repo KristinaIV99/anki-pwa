@@ -283,9 +283,9 @@
 					return;
 				}
 		
-				const content = textDisplay.textContent;
-				if (!currentText) {
-					console.error('Tekstas tuščias');
+				const pageText = pages[currentPageIndex];
+				if (!pageText) {
+					console.error('Nepavyko rasti puslapio teksto');
 					return;
 				}
 		
@@ -367,14 +367,11 @@
 				// Jei nėra puslapių, rodome tuščią būseną
 				if (!pages || pages.length === 0) {
 					textDisplay.textContent = ''; // arba galite rodyti kokį nors pradinį tekstą
-					
-					// Atnaujiname puslapių skaičius
 					const currentPageEl = document.getElementById('currentPage');
 					const totalPagesEl = document.getElementById('totalPages');
 					
 					if (currentPageEl) currentPageEl.textContent = '0';
 					if (totalPagesEl) totalPagesEl.textContent = '0';
-					
 					currentPageIndex = 0; // Nustatome indeksą į pradinę poziciją
 					return;
 				}
@@ -387,16 +384,14 @@
 					currentPageIndex = 0;
 				}
 			
+				// Nustatome pradinį tekstą
 				textDisplay.textContent = pages[currentPageIndex];
 			
+				// Jei yra pažymėtų žodžių, juos pažymime
 				if (selectedWords && selectedWords.length > 0) {
 					selectedWords.forEach(item => {
 						if (item.word) {
-							try {
-								highlightWord(item.word);
-							} catch (error) {
-								console.error('Klaida žymint žodį:', item.word, error);
-							}
+							highlightWord(item.word);
 						}
 					});
 				}
