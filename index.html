@@ -372,6 +372,9 @@
 		
 			if (currentPageEl) currentPageEl.textContent = currentPageIndex + 1;
 			if (totalPagesEl) totalPagesEl.textContent = pages.length;
+		
+			// Inicializuojame canvas
+			initializeCanvas();
 		}
 
         function nextPage() {
@@ -387,6 +390,19 @@
                 displayCurrentPage();
             }
         }
+
+		function initializeCanvas() {
+			const canvas = document.getElementById('highlightLayer');
+			const textDiv = document.getElementById('textDisplay');
+			const ctx = canvas.getContext('2d');
+			
+			// Nustatome canvas dydį pagal tekstą
+			canvas.width = textDiv.offsetWidth;
+			canvas.height = textDiv.offsetHeight;
+			
+			// Išvalome canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
 
         document.getElementById('fileInput').addEventListener('change', async (e) => {
 			alert('Failas pasirinktas'); // Pakeičiame į alert
