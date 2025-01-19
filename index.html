@@ -193,6 +193,12 @@
             z-index: 1000;
         }
 		
+		.highlighted-word {
+			background-color: #fff59d;
+			padding: 2px 0;
+			border-radius: 2px;
+}
+		
         /* Nauji stiliai */
         .button-group {
             display: flex;
@@ -460,6 +466,7 @@
 			const selectedText = selection.toString().trim();
 			
 			if (selectedText) {
+				const textDisplay = document.getElementById('textDisplay');
 				const fullText = pages[currentPageIndex];
 				
 				if (fullText) {
@@ -550,7 +557,21 @@
 						selectedWords.push({
 							word: selectedText,
 							sentence: containingSentence
+							position: {
+								pageIndex: currentPageIndex,
+								start: selectionStart,
+								end: selectionEnd
+							}
 						});
+						
+						// Pridedame pažymėjimą į tekstą
+						const beforeText = fullText.substring(0, selectionStart);
+						const afterText = fullText.substring(selectionEnd);
+						const highlightedText = `<span class="highlighted-word">${selectedText}</span>`;
+						pages[currentPageIndex] = beforeText + highlightedText + afterText;
+						
+						// Atnaujiname rodomą tekstą
+						textDisplay.innerHTML = pages[currentPageIndex];
 						
 						updateWordsList();
 						saveToLocalStorage();
@@ -587,6 +608,7 @@
 
         function saveToLocalStorage() {
             localStorage.setItem('ankiWords', JSON.stringify(selectedWords));
+			localStorage.setItem('ankiPages', JSON.stringify(pages)); // Išsaugome ir puslapius su pažymėjimais
         }
 
         // Naujos funkcijos
@@ -615,12 +637,17 @@
                 updateWordsList();
             }
 
-            const savedText = localStorage.getItem('currentText');
-            if (savedText) {
-                pages = splitTextIntoPages(savedText);
-                displayCurrentPage();
-            }
-            updateWordCount();
+            const savedPages = localStorage.getItem('ankiPages');
+            if (savedPages) {
+				pages = JSON.parse(savedPages);
+			} else {
+				const savedText = localStorage.getItem('currentText');
+				if (savedText) {
+					pages = splitTextIntoPages(savedText);
+				}
+			}
+			displayCurrentPage();
+			updateWordCount();
             
             // Pradžioje paslepiame žodžių sąrašą
             document.getElementById('wordsListContainer').style.display = 'none';
