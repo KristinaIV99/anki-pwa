@@ -420,15 +420,17 @@
 			const range = document.createRange();
 			const textNode = textDisplay.firstChild;
 			
-			let startPos = text.indexOf(word);
-			while (startPos !== -1) {
-				range.setStart(textNode, startPos);
-				range.setEnd(textNode, startPos + word.length);
+			// Sukuriame regex kuris ieško žodžio su žodžių ribomis
+			const regex = new RegExp(`\\b${word}\\b`, 'g');
+			let match;
+			
+			while ((match = regex.exec(text)) !== null) {
+				range.setStart(textNode, match.index);
+				range.setEnd(textNode, match.index + word.length);
 				highlightWord(range);
-				startPos = text.indexOf(word, startPos + 1);
 			}
 		}
-
+		
         document.getElementById('fileInput').addEventListener('change', async (e) => {
 			alert('Failas pasirinktas'); // Pakeičiame į alert
             const file = e.target.files[0];
