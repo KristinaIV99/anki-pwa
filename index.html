@@ -91,6 +91,18 @@
             display: none;
         }
 		
+		.page-numbers {
+			background-color: rgba(76, 175, 80, 0.9);
+			color: white;
+			padding: 12px 20px;
+			border-radius: 50px;
+			pointer-events: auto;
+			font-weight: bold;
+			text-align: center;
+			min-width: 80px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+		}
+		
         h1 {
             text-align: center;
             color: white;
@@ -228,6 +240,9 @@
 
         <div class="pagination-controls">
             <button class="page-button page-button-left" onclick="previousPage()">◀</button>
+			<div class="page-numbers">
+				<span id="currentPage">1</span> / <span id="totalPages">1</span>
+			</div>
 			<button class="page-button page-button-right" onclick="nextPage()">▶</button>
 		</div>
         
