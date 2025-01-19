@@ -640,6 +640,9 @@
 							sentence: containingSentence
 						});
 						
+						// Pažymime visus tokius žodžius šiame puslapyje
+						highlightSavedWord(selectedText);
+						
 						updateWordsList();
 						saveToLocalStorage();
 						showStatus('Žodis išsaugotas!', 'success');
