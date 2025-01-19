@@ -277,11 +277,19 @@
 	
 		function highlightWord(word) {
 			const textDisplay = document.getElementById('textDisplay');
-			const text = textDisplay.textContent;
+			const content = textDisplay.innerHTML;
 			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // Escape special characters
-			const regex = new RegExp(`(${escapedWord})`, 'gi');
 			
+			// Patikriname ar žodis jau nėra pažymėtas
+			const spanRegex = new RegExp(`<span class="highlighted-.*?">${escapedWord}</span>`, 'gi');
+			if (content.match(spanRegex)) {
+				return; // Jei žodis jau pažymėtas, nieko nedarome
+			}
+			
+			// Ieškome tik nepažymėtų žodžio pasikartojimų
+			const regex = new RegExp(`(?<!<[^>]*)(${escapedWord})(?![^<]*>)`, 'gi');
 			let isFirst = true;
+			
 			const highlightedText = text.replace(regex, (match) => {
 				const className = isFirst ? 'highlighted-primary' : 'highlighted-secondary';
 				isFirst = false;
@@ -374,6 +382,14 @@
 			}
 		
 			textDisplay.textContent = pages[currentPageIndex];
+		
+			if (selectedWords && selectedWords.length > 0) {
+				selectedWords.forEach(item => {
+					if (item.word) {
+						highlightWord(item.word);
+					}
+				});
+			}
 		
 			// Atnaujiname puslapių skaičius
 			const currentPageEl = document.getElementById('currentPage');
