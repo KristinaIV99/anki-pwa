@@ -391,7 +391,7 @@
             if (currentPageIndex < pages.length - 1) {
                 currentPageIndex++;
                 displayCurrentPage();
-				saveToLocalStorage(); // Pridedame šią eilutę
+				saveToLocalStorage();
             }
         }
 
@@ -439,13 +439,13 @@
 			const boundaryPattern = `[${wordBoundaries.map(char => 
 				char.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('')}]|^|$`;
 			
-			// Ieškome žodžio tekste
+			// Ieškome žodžio tekste, nekreipiant dėmesio į raidžių dydį
 			let index = 0;
 			const lowerWord = word.toLowerCase();
 			const lowerText = text.toLowerCase();
 			
 			while (index < text.length) {
-				// Randame galimą žodžio poziciją
+				// Randame galimą žodžio poziciją naudodami mažąsias raides
 				const pos = lowerText.indexOf(lowerWord, index);
 				if (pos === -1) break;
 				
@@ -620,12 +620,9 @@
 						if (char === '\n') {
 							break;
 						}
-						// Sakinio pradžia gali būti po ., ? arba ! arba ... bet tik jei po jų neseka mažoji raidė
-						if (['.', '?', '!'].includes(char) || 
-							(char === '.' && fullText.substring(sentenceStart - 3, sentenceStart) === '...')) {
-							if (!isDialogueContinuation(fullText, sentenceStart - 1)) {
-								break;
-							}
+						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
+						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
+							break;
 						}
 						sentenceStart--;
 					}
@@ -634,24 +631,6 @@
 					let sentenceEnd = selectionEnd;
 					while (sentenceEnd < fullText.length) {
 						const char = fullText.charAt(sentenceEnd);
-						const nextChars = fullText.substring(sentenceEnd, Math.min(sentenceEnd + 3, fullText.length));
-						
-						// Tikriname tritaškį
-						if (nextChars === '...') {
-							sentenceEnd += 3;  // Įtraukiame tritaškį į sakinį
-							break;  // Baigiame sakinį čia
-						}
-						
-						// Jei nėra tritaškio, tikriname kitus atvejus
-							if (['.', '?', '!'].includes(char)) {
-								sentenceEnd++;
-								// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
-								if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
-									continue;
-								}
-								break;
-							}
-						
 						// Sustojame ties naujos eilutės ženklu
 						if (char === '\n') {
 							const prevChar = fullText.charAt(sentenceEnd - 1);
@@ -684,17 +663,6 @@
 		
 					// Ištraukiame pilną sakinį
 					let containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
-					
-					// Tikriname ar yra tritaškis ir ar jis nėra sakinio gale
-					const ellipsisIndex = containingSentence.indexOf('...');
-					if (ellipsisIndex !== -1 && ellipsisIndex !== containingSentence.length - 3) {
-						// Jei tritaškis yra ir jis ne pabaigoje, imame tik reikiamą sakinio dalį
-						const beforeEllipsis = containingSentence.substring(0, ellipsisIndex + 3);
-						const afterEllipsis = containingSentence.substring(ellipsisIndex + 3);
-						// Pasirenkame tą sakinio dalį, kurioje yra mūsų žodis
-						containingSentence = selectedText.toLowerCase().includes(beforeEllipsis.toLowerCase()) ? 
-							beforeEllipsis : afterEllipsis;
-					}
 					
 					// Patikriname ar sakinys prasideda brūkšniu arba kabutėmis
 					if (sentenceStart > 0) {
