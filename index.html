@@ -424,10 +424,12 @@
 			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			
 			// Sukuriame regex, kuris ieško žodžio su žodžių ribomis
-			const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'g');
-			let match;
+			const wordRegex = new RegExp(`(?:^|[^a-zA-ZåäöÅÄÖ])${escapedWord}(?:[^a-zA-ZåäöÅÄÖ]|$)`, 'g');
+    let match;
 			
 			while ((match = wordRegex.exec(text)) !== null) {
+				// Koreguojame index, kad praleistume prefikso simbolį
+				const start = match[0].startsWith(word) ? match.index : match.index + 1;
 				range.setStart(textNode, match.index);
 				range.setEnd(textNode, match.index + word.length);
 				highlightWord(range);
