@@ -1,0 +1,811 @@
+
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Anki žodžių rinkimas</title>
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+			width: 100%;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+            padding-bottom: 80px;
+            background-color: #1a1a1a;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 10px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			padding-top: 80px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .page-container {
+            width: 100%;
+            height: auto;
+			max-width: 800px;  /* ar koks kitas tinkamas plotis */
+			display: flex;
+			justify-content: center;
+			min-height: calc(100vh - 250px);
+            overflow: visible;
+			margin: 0 auto;  /* Centruoja page-container */
+			padding: 0;  /* Nuimame bet kokį papildomą padding */
+        }
+        .text-page {
+            width: 95%;
+			height: auto;
+			margin: 0 auto;
+			text-align: left;
+            overflow-y: visible;
+            padding: 15px 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fbf0d9;
+			color: #5c4b37;
+            white-space: pre-wrap;
+            -webkit-touch-callout: default;
+            -webkit-user-select: text;
+            user-select: text;
+            font-size: 20px;
+            line-height: 1.5;
+        }
+        .pagination-controls {
+			position: fixed;
+			top: 20px;
+			left: 0;
+			right: 0;
+			z-index: 1000;
+			display: flex;
+			justify-content: space-between;
+			padding: 0 20px;
+			pointer-events: none; /* Kad fonas nereaguotų į paspaudimus */
+		}
+		
+		.page-button {
+			background-color: #4CAF50;
+			color: white;
+			padding: 12px 20px;
+			border: none;
+			border-radius: 50px;
+			cursor: pointer;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+			pointer-events: auto; /* Grąžiname mygtukų paspaudimus */
+			transition: transform 0.2s;
+		}
+		
+		.page-button:hover {
+			transform: scale(1.05);
+		}
+        .page-info {
+            display: none;
+        }
+		
+		.page-numbers {
+			background-color: rgba(76, 175, 80, 0.9);
+			color: white;
+			padding: 12px 20px;
+			border-radius: 50px;
+			pointer-events: auto;
+			font-weight: bold;
+			text-align: center;
+			min-width: 80px;
+			box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+		}
+		
+        h1 {
+            text-align: center;
+            color: white;
+        }
+        .file-input {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            text-align: center;
+            width: 300px;
+            box-sizing: border-box;
+			
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .selected-word {
+            background: #e0f2f1;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #4CAF50;
+        }
+        #status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        .status-success {
+            background-color: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status-error {
+            background-color: #ffcdd2;
+            color: #c62828;
+        }
+        #fixedButton {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            font-size: 16px;
+            font-weight: bold;
+            width: calc(100% - 40px);
+            max-width: 800px;
+            margin: 0 auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+        @media (min-width: 800px) {
+            #fixedButton {
+                width: 200px;
+            }
+        }
+        #wordCount {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 1000;
+        }
+		
+		.page-container {
+			position: relative;  /* Kad galėtume pozicionuoti canvas virš teksto */
+		}
+		
+		#highlightLayer {
+			position: absolute;
+			top: 0;
+			left: 0;
+			pointer-events: none;  /* Leidžia teksto žymėjimą "per" canvas */
+			z-index: 1;  /* Canvas bus virš teksto */
+		}
+		
+		#textDisplay {
+			position: relative;
+			z-index: 0;
+}
+		
+        /* Nauji stiliai */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .danger-button {
+            background-color: #f44336 !important;
+        }
+        
+        .warning-button {
+            background-color: #ffc107 !important;
+            color: #000 !important;
+        }
+
+        #wordsListContainer {
+            display: none;
+            margin-top: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Anki žodžių rinkimas</h1>
+        
+        <div id="status"></div>
+
+        <input type="file" id="fileInput" class="file-input" accept=".txt,.md,.docx">
+        <label for="fileInput" class="file-label">Įkelti .txt, .md arba .docx failą</label>
+		
+        <div class="button-group">
+            <button onclick="clearText()" class="danger-button">Ištrinti tekstą</button>
+            <button onclick="toggleWordsList()" class="warning-button">Rodyti/Slėpti žodžius</button>
+            <button onclick="clearWordsList()" class="danger-button">Išvalyti žodžių sąrašą</button>
+        </div>
+
+        <div class="page-container">
+			<canvas id="highlightLayer"></canvas>
+            <div id="textDisplay" class="text-page"></div>
+        </div>
+
+        <div class="pagination-controls">
+            <button class="page-button page-button-left" onclick="previousPage()">◀</button>
+			<div class="page-numbers">
+				<span id="currentPage">1</span> / <span id="totalPages">1</span>
+			</div>
+			<button class="page-button page-button-right" onclick="nextPage()">▶</button>
+		</div>
+        
+        <div id="wordsListContainer">
+            <button onclick="downloadWords()">Atsisiųsti žodžius</button>
+            <div id="wordsList"></div>
+        </div>
+    </div>
+
+    <div id="wordCount"></div>
+    <button id="fixedButton" onclick="saveWord()">Išsaugoti žodį</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+    <script>
+		alert("JavaScript veikia!"); // PRIDĖTI ŠIĄ EILUTĘ ČIA
+		
+        let selectedWords = [];
+        let currentPageIndex = 0;
+        let pages = [];
+        const WORDS_PER_PAGE = 300; // Vidutiniškai žodžių viename puslapyje
+
+		function splitTextIntoPages(text) {
+			console.log('1. Funkcija prasidėjo');  // Pridėtas console.log
+			const pages = [];
+			// Padalinkime tekstą į paragrafus pagal naują eilutę
+			const paragraphs = text.split('\n');
+			console.log('2. Paragrafų skaičius:', paragraphs.length);  // Pridėtas console.log
+		
+			let currentPage = [];
+			let currentWordCount = 0;
+			
+			for (let paragraph of paragraphs) {
+				console.log('Apdorojamas paragrafas:', paragraph); // Naujas log
+				
+				// Jei tai yra skyriaus pavadinimas (prasideda #)
+				if (paragraph.startsWith('#')) {
+					console.log('4. Rastas skyriaus pavadinimas:', paragraph);  // Pridėtas console.log
+					currentPage.push(paragraph);
+					continue;
+				}
+		
+				// Jei paragrafas tuščias, pridedame jį ir tęsiame
+				if (paragraph.trim() === '') {
+					console.log('5. Rastas tuščias paragrafas');  // Pridėtas console.log
+					currentPage.push(paragraph);
+					continue;
+				}
+		
+				const paragraphWordCount = paragraph.split(/\s+/).length;
+				console.log('6. Žodžių skaičius paragrafe:', paragraphWordCount);  // Pridėtas console.log
+
+				// Jei pridėjus šį paragrafą viršysime žodžių limitą puslapyje
+				if (currentWordCount + paragraphWordCount > WORDS_PER_PAGE && currentPage.length > 0) {
+					console.log('Kuriamas naujas puslapis, nes viršytas žodžių limitas'); // Naujas log
+					pages.push(currentPage.join('\n'));
+					currentPage = [];
+					currentWordCount = 0;
+				}
+				
+				currentPage.push(paragraph);
+				currentWordCount += paragraphWordCount;
+			}
+			
+			// Pridedame paskutinį puslapį, jei liko teksto
+			if (currentPage.length > 0) {
+				console.log('8. Pridedamas paskutinis puslapis');  // Pridėtas console.log
+				pages.push(currentPage.join('\n'));
+			}
+		
+			console.log('9. Galutinis rezultatas:', pages);  // Pridėtas console.log
+			return pages;
+		}
+
+        function displayCurrentPage() {
+            const textDisplay = document.getElementById('textDisplay');
+			if (!textDisplay) {
+				console.error('Nerastas textDisplay elementas');
+				return;
+			}
+		
+			// Jei nėra puslapių, rodome tuščią būseną
+			if (!pages || pages.length === 0) {
+				textDisplay.textContent = ''; // arba galite rodyti kokį nors pradinį tekstą
+				
+				// Atnaujiname puslapių skaičius
+				const currentPageEl = document.getElementById('currentPage');
+				const totalPagesEl = document.getElementById('totalPages');
+				
+				if (currentPageEl) currentPageEl.textContent = '0';
+				if (totalPagesEl) totalPagesEl.textContent = '0';
+				
+				currentPageIndex = 0; // Nustatome indeksą į pradinę poziciją
+				return;
+			}
+		
+			// Įsitikiname, kad currentPageIndex yra validus
+			if (currentPageIndex >= pages.length) {
+				currentPageIndex = pages.length - 1;
+			}
+			if (currentPageIndex < 0) {
+				currentPageIndex = 0;
+			}
+		
+			textDisplay.textContent = pages[currentPageIndex];
+		
+			// Atnaujiname puslapių skaičius
+			const currentPageEl = document.getElementById('currentPage');
+			const totalPagesEl = document.getElementById('totalPages');
+		
+			if (currentPageEl) currentPageEl.textContent = currentPageIndex + 1;
+			if (totalPagesEl) totalPagesEl.textContent = pages.length;
+		
+			// Inicializuojame canvas
+			initializeCanvas();
+			
+			// Paieškome ir pažymime visus išsaugotus žodžius šiame puslapyje
+			const fullText = pages[currentPageIndex];
+			if (fullText && selectedWords.length > 0) {
+				selectedWords.forEach(item => {
+					if (fullText.includes(item.word)) {
+						highlightSavedWord(item.word);
+					}
+				});
+			}
+		}
+
+        function nextPage() {
+            if (currentPageIndex < pages.length - 1) {
+                currentPageIndex++;
+                displayCurrentPage();
+				saveToLocalStorage();
+            }
+        }
+
+        function previousPage() {
+            if (currentPageIndex > 0) {
+                currentPageIndex--;
+                displayCurrentPage();
+				saveToLocalStorage();
+            }
+        }
+
+		function initializeCanvas() {
+			const canvas = document.getElementById('highlightLayer');
+			const textDiv = document.getElementById('textDisplay');
+			const ctx = canvas.getContext('2d');
+			
+			// Nustatome canvas dydį pagal tekstą
+			canvas.width = textDiv.offsetWidth;
+			canvas.height = textDiv.offsetHeight;
+			
+			// Išvalome canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+		}
+
+		function highlightSavedWord(word) {
+			const textDisplay = document.getElementById('textDisplay');
+			const text = textDisplay.textContent;
+			const textNode = textDisplay.firstChild;
+			
+			// Pabėgame nuo specialių regex simbolių žodyje
+			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			
+			// Išplėstas žodžio ribų apibrėžimas
+			const wordBoundaries = [
+				' ', '\n', '\t',                  // Tarpai ir naujos eilutės
+				'.', ',', '!', '?', ':', ';',     // Skyrybos ženklai
+				'"', "'", '"', '"', "'", "'",     // Kabutės
+				'_', '*', '~', '`',               // Markdown simboliai
+				'(', ')', '[', ']', '{', '}',     // Skliaustai
+				'-', '–', '—',                    // Brūkšniai
+				'<', '>'                          // HTML ženklai
+			];
+			
+			// Konvertuojame į RegExp pattern
+			const boundaryPattern = `[${wordBoundaries.map(char => 
+				char.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('')}]|^|$`;
+			
+			// Ieškome žodžio tekste, nekreipiant dėmesio į raidžių dydį
+			let index = 0;
+			const lowerWord = word.toLowerCase();
+			const lowerText = text.toLowerCase();
+			
+			while (index < text.length) {
+				// Randame galimą žodžio poziciją naudodami mažąsias raides
+				const pos = lowerText.indexOf(lowerWord, index);
+				if (pos === -1) break;
+				
+				// Tikriname simbolius prieš ir po žodžio
+				const before = pos === 0 ? ' ' : text[pos - 1];
+				const after = pos + word.length >= text.length ? ' ' : text[pos + word.length];
+				
+				// Tikriname ar simboliai prieš ir po yra leistini ribų simboliai
+				const isValidBoundary = (char) => 
+					wordBoundaries.includes(char) || /\s/.test(char);
+				
+				if (isValidBoundary(before) && isValidBoundary(after)) {
+					// Sukuriame range ir pažymime žodį
+					const range = document.createRange();
+					range.setStart(textNode, pos);
+					range.setEnd(textNode, pos + word.length);
+					highlightWord(range);
+				}
+				
+				index = pos + 1;
+			}
+		}
+		
+		function highlightWord(range) {
+			const canvas = document.getElementById('highlightLayer');
+			const ctx = canvas.getContext('2d');
+			const textDiv = document.getElementById('textDisplay');
+			
+			const rect = range.getBoundingClientRect();
+			const divRect = textDiv.getBoundingClientRect();
+			
+			// Piešiame tik žodžio pažymėjimą
+			ctx.fillStyle = 'rgba(255, 235, 59, 0.5)';
+			ctx.fillRect(
+				rect.left - divRect.left,
+				rect.top - divRect.top,
+				rect.width,
+				rect.height
+			);
+		}
+		
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+			alert('Failas pasirinktas'); // Pakeičiame į alert
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const fileType = file.name.split('.').pop().toLowerCase();
+            const reader = new FileReader();
+
+            reader.onload = async (event) => {
+                try {
+					alert('Pradedamas failo skaitymas'); // Pakeičiame į alert
+                    let content = '';
+                    
+                    if (fileType === 'docx') {
+                        const arrayBuffer = event.target.result;
+                        const result = await mammoth.convertToHtml({arrayBuffer: arrayBuffer});
+                        content = result.value.replace(/<[^>]*>/g, ''); // Pašaliname HTML žymes
+                    } else {
+						// .txt ir .md failams - naudojame TextDecoder su UTF-8
+						const arrayBuffer = event.target.result;
+						const decoder = new TextDecoder('UTF-8');
+						content = decoder.decode(arrayBuffer);
+					}
+		
+					alert('Failo turinys gautas'); // Pakeičiame į alert
+			
+					// Patikriname ar turinys nėra tuščias
+					if (!content || content.trim().length === 0) {
+						throw new Error('Failas yra tuščias');
+					}
+			
+					// Patikriname ar elementas egzistuoja
+					const textDisplay = document.getElementById('textDisplay');
+					if (!textDisplay) {
+						throw new Error('Nerastas tekstui skirtas elementas');
+					}
+			
+					alert('Bandome iškviesti splitTextIntoPages');
+					pages = splitTextIntoPages(content);
+					currentPageIndex = 0;
+					
+					// Patikriname ar puslapiai buvo sukurti
+					if (!pages || pages.length === 0) {
+						throw new Error('Nepavyko sukurti puslapių iš teksto');
+					}
+			
+					displayCurrentPage();
+					localStorage.setItem('currentText', content);
+					showStatus('Tekstas įkeltas ir išsaugotas!', 'success');
+					updateWordCount();
+				} catch (error) {
+					console.error('Detalesnė klaida:', error);
+					showStatus('Klaida apdorojant failą: ' + error.message, 'error');
+				}
+			};
+            
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Pridedame klaviatūros navigaciją
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') {
+                nextPage();
+            } else if (e.key === 'ArrowLeft') {
+                previousPage();
+            }
+        });
+
+        function updateWordCount() {
+            const wordCount = document.getElementById('wordCount');
+            wordCount.textContent = `Išsaugota žodžių: ${selectedWords.length}`;
+        }
+	
+		function clearText() {
+			const textDisplay = document.getElementById('textDisplay');
+			const canvas = document.getElementById('highlightLayer');
+			const ctx = canvas.getContext('2d');
+			
+			textDisplay.textContent = '';
+			// Išvalome canvas
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			
+			pages = [];
+			currentPageIndex = 0;
+			displayCurrentPage();
+			localStorage.removeItem('currentText');
+			localStorage.removeItem('currentPageIndex');
+			showStatus('Tekstas ištrintas!', 'success');
+		}
+	
+		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
+		function saveWord() {
+			const selection = window.getSelection();
+			const selectedText = selection.toString().trim();
+			
+			if (selectedText) {
+				const fullText = pages[currentPageIndex];
+				
+				if (fullText) {
+					// Pridedame pažymėjimą canvas'e
+					const range = selection.getRangeAt(0);
+					highlightWord(range);
+		
+					// Gauname pažymėto teksto poziciją
+					const preSelectionRange = range.cloneRange();
+					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
+					preSelectionRange.setEnd(range.startContainer, range.startOffset);
+					const selectionStart = preSelectionRange.toString().length;
+					const selectionEnd = selectionStart + selectedText.length;
+		
+					// Funkcija patikrinti ar po sakinio eina dialogas
+					function isDialogueContinuation(text, position) {
+						// Patikriname ar po skiriamojo ženklo (?, !) seka žodis iš mažosios raidės
+						const nextChar = text.charAt(position + 1);
+						if (!nextChar) return false;
+						
+						// Praleidžiame tarpus ir brūkšnius
+						let i = position + 1;
+						while (i < text.length && [' ', '–', '-'].includes(text[i])) {
+							i++;
+						}
+						// Jei po to seka mažoji raidė, tai dialogo tęsinys
+						return text[i] && text[i] === text[i].toLowerCase() && text[i] !== ' ';
+					}
+		
+					// Randame sakinio pradžią
+					let sentenceStart = selectionStart;
+					while (sentenceStart > 0) {
+						const char = fullText.charAt(sentenceStart - 1);
+						// Sustojame ties naujos eilutės ženklu
+						if (char === '\n') {
+							break;
+						}
+						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
+						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
+							break;
+						}
+						sentenceStart--;
+					}
+		
+					// Randame sakinio pabaigą
+					let sentenceEnd = selectionEnd;
+					while (sentenceEnd < fullText.length) {
+						const char = fullText.charAt(sentenceEnd);
+						// Sustojame ties naujos eilutės ženklu
+						if (char === '\n') {
+							const prevChar = fullText.charAt(sentenceEnd - 1);
+							// Jei prieš naują eilutę buvo kablelis, žodis arba markdown žymėjimas
+							if (prevChar === ',' || 
+								!/[.!?]/.test(prevChar) || 
+								['', '', '~', ',', ','].includes(prevChar)) {
+								// Jei tai eilutės pabaiga be skiriamojo ženklo arba su markdown žymėjimu
+								if (!/[.!?]/.test(prevChar) && 
+									(/\w/.test(prevChar) || ['', '', '~', ',', ','].includes(prevChar))) {
+									break;
+								}
+							}
+							// Grįžtame atgal iki paskutinio skiriamojo ženklo
+							while (sentenceEnd > 0 && !['.', '?', '!'].includes(fullText.charAt(sentenceEnd - 1))) {
+								sentenceEnd--;
+							}
+							break;
+						}
+						if (['.', '?', '!'].includes(char)) {
+							sentenceEnd++;
+							// Jei po skiriamojo ženklo seka mažoji raidė, tęsiame paiešką
+							if (isDialogueContinuation(fullText, sentenceEnd - 1)) {
+								continue;
+							}
+							break;
+						}
+						sentenceEnd++;
+					}
+		
+					// Ištraukiame pilną sakinį
+					let containingSentence = fullText.substring(sentenceStart, sentenceEnd).trim();
+					
+					// Patikriname ar sakinys prasideda brūkšniu arba kabutėmis
+					if (sentenceStart > 0) {
+						const prevChar = fullText.charAt(sentenceStart - 1);
+						if (prevChar === '–' || prevChar === '-' || prevChar === '"') {
+							containingSentence = prevChar + containingSentence;
+						}
+					}
+		
+					if (containingSentence && containingSentence.includes(selectedText)) {
+						selectedWords.push({
+							word: selectedText,
+							sentence: containingSentence
+						});
+						
+						// Pažymime visus tokius žodžius šiame puslapyje
+						highlightSavedWord(selectedText);
+						
+						updateWordsList();
+						saveToLocalStorage();
+						showStatus('Žodis išsaugotas!', 'success');
+						updateWordCount();
+						
+						selection.removeAllRanges();
+					} else {
+						showStatus('Nepavyko rasti pilno sakinio!', 'error');
+					}
+				}
+			} else {
+				showStatus('Pažymėkite žodį tekste!', 'error');
+			}
+		}
+
+        function updateWordsList() {
+            const wordsList = document.getElementById('wordsList');
+            wordsList.innerHTML = selectedWords.map((item, index) => `
+                <div class="selected-word">
+                    <strong>${item.word}</strong><br>
+                    ${item.sentence}
+                    <button onclick="removeWord(${index})" style="background-color: #f44336;">Pašalinti</button>
+                </div>
+            `).join('');
+        }
+
+        function removeWord(index) {
+            selectedWords.splice(index, 1);
+            updateWordsList();
+            saveToLocalStorage();
+            updateWordCount();
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('ankiWords', JSON.stringify(selectedWords));
+			localStorage.setItem('currentPageIndex', currentPageIndex);
+        }
+
+        // Naujos funkcijos
+        function toggleWordsList() {
+            const container = document.getElementById('wordsListContainer');
+            const isHidden = container.style.display === 'none';
+            container.style.display = isHidden ? 'block' : 'none';
+            showStatus(isHidden ? 'Žodžių sąrašas rodomas' : 'Žodžių sąrašas paslėptas', 'success');
+        }
+
+        function clearWordsList() {
+            if (confirm('Ar tikrai norite ištrinti visus išsaugotus žodžius?')) {
+                selectedWords = [];
+                updateWordsList();
+                saveToLocalStorage();
+                updateWordCount();
+                showStatus('Visi žodžiai ištrinti!', 'success');
+            }
+        }
+
+        // Modifikuojame loadFromLocalStorage(), kad pradžioje paslėptų sąrašą
+        function loadFromLocalStorage() {
+            const savedWords = localStorage.getItem('ankiWords');
+            if (savedWords) {
+                selectedWords = JSON.parse(savedWords);
+                updateWordsList();
+            }
+
+            const savedText = localStorage.getItem('currentText');
+            if (savedText) {
+                pages = splitTextIntoPages(savedText);
+				// Atstatome puslapio numerį
+				const savedPageIndex = localStorage.getItem('currentPageIndex');
+				if (savedPageIndex !== null) {
+					currentPageIndex = parseInt(savedPageIndex);
+				}
+				displayCurrentPage();
+            }
+            updateWordCount();
+            
+            // Pradžioje paslepiame žodžių sąrašą
+            document.getElementById('wordsListContainer').style.display = 'none';
+        }
+
+        function downloadWords() {
+            if (selectedWords.length === 0) {
+                showStatus('Nėra išsaugotų žodžių!', 'error');
+                return;
+            }
+
+            const content = selectedWords
+                .map(item => `${item.word}\t${item.sentence}`)
+                .join('\n');
+
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'anki-zodziai.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = type === 'success' ? 'status-success' : 'status-error';
+            statusDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        window.addEventListener('load', () => {
+            loadFromLocalStorage();
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registruotas');
+                    })
+                    .catch(error => {
+                        console.log('Service Worker klaida:', error);
+                    });
+            }
+        });
+    </script>
+</body>
+</html>
