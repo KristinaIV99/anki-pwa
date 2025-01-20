@@ -639,6 +639,10 @@
 						// Tikriname tritaškį
 						if (nextChars === '...') {
 							sentenceEnd += 3;  // Įtraukiame tritaškį į sakinį
+							// Grįžtame iki paskutinio "tikro" sakinio dalies
+							while (sentenceEnd > 0 && [' ', '\n', '\t'].includes(fullText.charAt(sentenceEnd - 1))) {
+								sentenceEnd--;
+							}
 							break;  // Baigiame sakinį čia
 						}
 						
