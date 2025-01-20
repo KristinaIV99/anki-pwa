@@ -193,21 +193,10 @@
             z-index: 1000;
         }
 		
-		.page-container {
-			position: relative;  /* Kad galėtume pozicionuoti canvas virš teksto */
-		}
-		
-		#highlightLayer {
-			position: absolute;
-			top: 0;
-			left: 0;
-			pointer-events: none;  /* Leidžia teksto žymėjimą "per" canvas */
-			z-index: 1;  /* Canvas bus virš teksto */
-		}
-		
-		#textDisplay {
-			position: relative;
-			z-index: 0;
+		.highlighted-word {
+			background-color: #fff59d;
+			padding: 2px 0;
+			border-radius: 2px;
 }
 		
         /* Nauji stiliai */
@@ -252,7 +241,6 @@
         </div>
 
         <div class="page-container">
-			<canvas id="highlightLayer"></canvas>
             <div id="textDisplay" class="text-page"></div>
         </div>
 
@@ -364,7 +352,19 @@
 				currentPageIndex = 0;
 			}
 		
-			textDisplay.textContent = pages[currentPageIndex];
+			// Gauname puslapių intervalą pažymėjimams
+			const range = getHighlightRange(currentPageIndex, pages.length);
+			
+			// Pašaliname pažymėjimus iš puslapių, kurie nebepatenka į intervalą
+			pages.forEach((page, index) => {
+				if (index < range.start || index > range.end) {
+					// Pašaliname highlight žymes iš puslapių, kurie yra už intervalo ribų
+					pages[index] = page.replace(/<span class="highlighted-word">(.*?)<\/span>/g, '$1');
+				}
+			});
+		
+			// Atnaujiname rodomą tekstą
+			textDisplay.innerHTML = pages[currentPageIndex];
 		
 			// Atnaujiname puslapių skaičius
 			const currentPageEl = document.getElementById('currentPage');
@@ -372,19 +372,6 @@
 		
 			if (currentPageEl) currentPageEl.textContent = currentPageIndex + 1;
 			if (totalPagesEl) totalPagesEl.textContent = pages.length;
-		
-			// Inicializuojame canvas
-			initializeCanvas();
-			
-			// Paieškome ir pažymime visus išsaugotus žodžius šiame puslapyje
-			const fullText = pages[currentPageIndex];
-			if (fullText && selectedWords.length > 0) {
-				selectedWords.forEach(item => {
-					if (fullText.includes(item.word)) {
-						highlightSavedWord(item.word);
-					}
-				});
-			}
 		}
 
         function nextPage() {
@@ -401,39 +388,6 @@
             }
         }
 
-		function initializeCanvas() {
-			const canvas = document.getElementById('highlightLayer');
-			const textDiv = document.getElementById('textDisplay');
-			const ctx = canvas.getContext('2d');
-			
-			// Nustatome canvas dydį pagal tekstą
-			canvas.width = textDiv.offsetWidth;
-			canvas.height = textDiv.offsetHeight;
-			
-			// Išvalome canvas
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-		}
-
-		function highlightSavedWord(word) {
-			const textDisplay = document.getElementById('textDisplay');
-			const text = textDisplay.textContent;
-			const range = document.createRange();
-			const textNode = textDisplay.firstChild;
-			
-			// Pabėgame nuo specialių regex simbolių žodyje
-			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-			
-			// Sukuriame regex, kuris ieško žodžio su žodžių ribomis
-			const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'g');
-			let match;
-			
-			while ((match = wordRegex.exec(text)) !== null) {
-				range.setStart(textNode, match.index);
-				range.setEnd(textNode, match.index + word.length);
-				highlightWord(range);
-			}
-		}
-		
         document.getElementById('fileInput').addEventListener('change', async (e) => {
 			alert('Failas pasirinktas'); // Pakeičiame į alert
             const file = e.target.files[0];
@@ -507,40 +461,25 @@
             wordCount.textContent = `Išsaugota žodžių: ${selectedWords.length}`;
         }
 	
+		// Nauja funkcija teksto išvalymui
 		function clearText() {
 			const textDisplay = document.getElementById('textDisplay');
-			const canvas = document.getElementById('highlightLayer');
-			const ctx = canvas.getContext('2d');
-			
 			textDisplay.textContent = '';
-			// Išvalome canvas
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-			
-			pages = [];
-			currentPageIndex = 0;
-			displayCurrentPage();
+			pages = []; // Pridėti šią eilutę
+			currentPageIndex = 0; // Pridėti šią eilutę
+			displayCurrentPage(); // Pridėti šią eilutę
 			localStorage.removeItem('currentText');
 			showStatus('Tekstas ištrintas!', 'success');
 		}
 	
-		function highlightWord(range) {
-			const canvas = document.getElementById('highlightLayer');
-			const ctx = canvas.getContext('2d');
-			const textDiv = document.getElementById('textDisplay');
-			
-			// Gauname pažymėto teksto koordinates
-			const rect = range.getBoundingClientRect();
-			const divRect = textDiv.getBoundingClientRect();
-			
-			// Piešiame geltoną foną
-			ctx.fillStyle = 'rgba(255, 235, 59, 0.5)'; // Geltona, pusiau permatoma
-			ctx.fillRect(
-				rect.left - divRect.left,  // x pozicija
-				rect.top - divRect.top,    // y pozicija
-				rect.width,                // plotis
-				rect.height                // aukštis
-			);
+		function getHighlightRange(currentPage, totalPages) {
+			const range = {
+				start: Math.max(0, currentPage - 3),
+				end: Math.min(totalPages - 1, currentPage + 3)
+			};
+			return range;
 		}
+
 	
 		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
 		function saveWord() {
@@ -548,14 +487,12 @@
 			const selectedText = selection.toString().trim();
 			
 			if (selectedText) {
+				const textDisplay = document.getElementById('textDisplay');
 				const fullText = pages[currentPageIndex];
 				
 				if (fullText) {
-					// Pridedame pažymėjimą canvas'e
-					const range = selection.getRangeAt(0);
-					highlightWord(range);
-		
 					// Gauname pažymėto teksto poziciją
+					const range = selection.getRangeAt(0);
 					const preSelectionRange = range.cloneRange();
 					preSelectionRange.selectNodeContents(document.getElementById('textDisplay'));
 					preSelectionRange.setEnd(range.startContainer, range.startOffset);
@@ -638,13 +575,32 @@
 					}
 		
 					if (containingSentence && containingSentence.includes(selectedText)) {
+						// Pridedame žodį į sąrašą
 						selectedWords.push({
 							word: selectedText,
-							sentence: containingSentence
+							sentence: containingSentence,
+							position: {
+								pageIndex: currentPageIndex,
+								start: selectionStart,
+								end: selectionEnd
+							}
 						});
 						
-						// Pažymime visus tokius žodžius šiame puslapyje
-						highlightSavedWord(selectedText);
+						 // Naujas kodas pažymėjimams intervale
+						const highlightRange = getHighlightRange(currentPageIndex, pages.length);
+						
+						// Pažymime žodį nurodytame puslapių intervale
+						for (let i = highlightRange.start; i <= highlightRange.end; i++) {
+							const pageText = pages[i];
+							// Escape special RegExp characters
+							const escapedText = selectedText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+							const regex = new RegExp(`(${escapedText})`, 'gi');
+							const highlightedText = pageText.replace(regex, '<span class="highlighted-word">$1</span>');
+							pages[i] = highlightedText;
+						}
+						
+						// Atnaujiname rodomą tekstą
+						textDisplay.innerHTML = pages[currentPageIndex];
 						
 						updateWordsList();
 						saveToLocalStorage();
@@ -681,6 +637,7 @@
 
         function saveToLocalStorage() {
             localStorage.setItem('ankiWords', JSON.stringify(selectedWords));
+			localStorage.setItem('ankiPages', JSON.stringify(pages)); // Išsaugome ir puslapius su pažymėjimais
         }
 
         // Naujos funkcijos
@@ -709,12 +666,17 @@
                 updateWordsList();
             }
 
-            const savedText = localStorage.getItem('currentText');
-            if (savedText) {
-                pages = splitTextIntoPages(savedText);
-                displayCurrentPage();
-            }
-            updateWordCount();
+            const savedPages = localStorage.getItem('ankiPages');
+            if (savedPages) {
+				pages = JSON.parse(savedPages);
+			} else {
+				const savedText = localStorage.getItem('currentText');
+				if (savedText) {
+					pages = splitTextIntoPages(savedText);
+				}
+			}
+			displayCurrentPage();
+			updateWordCount();
             
             // Pradžioje paslepiame žodžių sąrašą
             document.getElementById('wordsListContainer').style.display = 'none';
