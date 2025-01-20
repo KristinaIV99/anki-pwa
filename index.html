@@ -427,7 +427,7 @@
 			const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'g');
 			let match;
 			
-			while ((match = regex.exec(text)) !== null) {
+			while ((match = wordRegex.exec(text)) !== null) {
 				range.setStart(textNode, match.index);
 				range.setEnd(textNode, match.index + word.length);
 				highlightWord(range);
