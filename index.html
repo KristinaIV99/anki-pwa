@@ -420,9 +420,11 @@
 			const range = document.createRange();
 			const textNode = textDisplay.firstChild;
 			
-			// Ieškome visų žodžio vietų, bet tik kaip atskirų žodžių
-			// Sukuriame regex, kuris ieško žodžio su žodžių ribomis (\b)
-			const wordRegex = new RegExp(`\\b${word}\\b`, 'g');
+			// Pabėgame nuo specialių regex simbolių žodyje
+			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+			
+			// Sukuriame regex, kuris ieško žodžio su žodžių ribomis
+			const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'g');
 			let match;
 			
 			while ((match = regex.exec(text)) !== null) {
