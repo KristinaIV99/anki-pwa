@@ -441,9 +441,12 @@
 			
 			// Ieškome žodžio tekste
 			let index = 0;
+			const lowerWord = word.toLowerCase();
+			const lowerText = text.toLowerCase();
+			
 			while (index < text.length) {
 				// Randame galimą žodžio poziciją
-				const pos = text.indexOf(word, index);
+				const pos = lowerText.indexOf(lowerWord, index);
 				if (pos === -1) break;
 				
 				// Tikriname simbolius prieš ir po žodžio
