@@ -1,0 +1,14 @@
+{
+  "žodžiai": {
+    "labas": {
+      "vertimas": "hello",
+      "kalbosDalis": "jaustukas",
+      "papildomaInfo": "Pasisveikinimo žodis"
+    },
+    "namas": {
+      "vertimas": "house",
+      "kalbosDalis": "daiktavardis",
+      "papildomaInfo": "Pastatas gyventi"
+    }
+  }
+}
