@@ -417,23 +417,46 @@
 		function highlightSavedWord(word) {
 			const textDisplay = document.getElementById('textDisplay');
 			const text = textDisplay.textContent;
-			const range = document.createRange();
 			const textNode = textDisplay.firstChild;
 			
 			// Pabėgame nuo specialių regex simbolių žodyje
 			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			
-			// Sukuriame regex, kuris ieško žodžio su žodžių ribomis
-			const wordRegex = new RegExp(`(?:^|[^a-zA-ZåäöÅÄÖ])${escapedWord}(?:[^a-zA-ZåäöÅÄÖ]|$)`, 'g');
-    let match;
+			// Ieškome tikslių žodžio pozicijų
+			const regex = new RegExp(`\\b${escapedWord}\\b`, 'g');
+			let match;
 			
-			while ((match = wordRegex.exec(text)) !== null) {
-				// Koreguojame index, kad praleistume prefikso simbolį
-				const start = match[0].startsWith(word) ? match.index : match.index + 1;
+			while ((match = regex.exec(text)) !== null) {
+				const range = document.createRange();
 				range.setStart(textNode, match.index);
 				range.setEnd(textNode, match.index + word.length);
-				highlightWord(range);
+				
+				// Tikriname ar tai tikrai atskiras žodis
+				const beforeChar = text[match.index - 1] || ' ';
+				const afterChar = text[match.index + word.length] || ' ';
+				
+				if (/\s/.test(beforeChar) && /\s/.test(afterChar)) {
+					highlightWord(range);
+				}
 			}
+		}
+		
+		function highlightWord(range) {
+			const canvas = document.getElementById('highlightLayer');
+			const ctx = canvas.getContext('2d');
+			const textDiv = document.getElementById('textDisplay');
+			
+			const rect = range.getBoundingClientRect();
+			const divRect = textDiv.getBoundingClientRect();
+			
+			// Piešiame tik žodžio pažymėjimą
+			ctx.fillStyle = 'rgba(255, 235, 59, 0.5)';
+			ctx.fillRect(
+				rect.left - divRect.left,
+				rect.top - divRect.top,
+				rect.width,
+				rect.height
+			);
 		}
 		
         document.getElementById('fileInput').addEventListener('change', async (e) => {
@@ -523,25 +546,6 @@
 			displayCurrentPage();
 			localStorage.removeItem('currentText');
 			showStatus('Tekstas ištrintas!', 'success');
-		}
-	
-		function highlightWord(range) {
-			const canvas = document.getElementById('highlightLayer');
-			const ctx = canvas.getContext('2d');
-			const textDiv = document.getElementById('textDisplay');
-			
-			// Gauname pažymėto teksto koordinates
-			const rect = range.getBoundingClientRect();
-			const divRect = textDiv.getBoundingClientRect();
-			
-			// Piešiame geltoną foną
-			ctx.fillStyle = 'rgba(255, 235, 59, 0.5)'; // Geltona, pusiau permatoma
-			ctx.fillRect(
-				rect.left - divRect.left,  // x pozicija
-				rect.top - divRect.top,    // y pozicija
-				rect.width,                // plotis
-				rect.height                // aukštis
-			);
 		}
 	
 		// Modifikuota saveWord funkcija su tikslesne sakinio paieška
