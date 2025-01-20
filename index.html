@@ -424,22 +424,45 @@
 			// Pabėgame nuo specialių regex simbolių žodyje
 			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			
-			// Ieškome tikslių žodžio pozicijų
-			const regex = new RegExp(`\\b${escapedWord}\\b`, 'g');
-			let match;
+			// Išplėstas žodžio ribų apibrėžimas
+			const wordBoundaries = [
+				' ', '\n', '\t',                  // Tarpai ir naujos eilutės
+				'.', ',', '!', '?', ':', ';',     // Skyrybos ženklai
+				'"', "'", '"', '"', ''', ''',     // Kabutės
+				'_', '*', '~', '`',               // Markdown simboliai
+				'(', ')', '[', ']', '{', '}',     // Skliaustai
+				'-', '–', '—',                    // Brūkšniai
+				'<', '>'                          // HTML ženklai
+			];
 			
-			while ((match = regex.exec(text)) !== null) {
-				const range = document.createRange();
-				range.setStart(textNode, match.index);
-				range.setEnd(textNode, match.index + word.length);
+			// Konvertuojame į RegExp pattern
+			const boundaryPattern = `[${wordBoundaries.map(char => 
+				char.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')).join('')}]|^|$`;
+			
+			// Ieškome žodžio tekste
+			let index = 0;
+			while (index < text.length) {
+				// Randame galimą žodžio poziciją
+				const pos = text.indexOf(word, index);
+				if (pos === -1) break;
 				
-				// Tikriname ar tai tikrai atskiras žodis
-				const beforeChar = text[match.index - 1] || ' ';
-				const afterChar = text[match.index + word.length] || ' ';
+				// Tikriname simbolius prieš ir po žodžio
+				const before = pos === 0 ? ' ' : text[pos - 1];
+				const after = pos + word.length >= text.length ? ' ' : text[pos + word.length];
 				
-				if (/\s/.test(beforeChar) && /\s/.test(afterChar)) {
+				// Tikriname ar simboliai prieš ir po yra leistini ribų simboliai
+				const isValidBoundary = (char) => 
+					wordBoundaries.includes(char) || /\s/.test(char);
+				
+				if (isValidBoundary(before) && isValidBoundary(after)) {
+					// Sukuriame range ir pažymime žodį
+					const range = document.createRange();
+					range.setStart(textNode, pos);
+					range.setEnd(textNode, pos + word.length);
 					highlightWord(range);
 				}
+				
+				index = pos + 1;
 			}
 		}
 		
@@ -594,9 +617,12 @@
 						if (char === '\n') {
 							break;
 						}
-						// Sakinio pradžia gali būti po ., ? arba ! bet tik jei po jų neseka mažoji raidė
-						if (['.', '?', '!'].includes(char) && !isDialogueContinuation(fullText, sentenceStart - 1)) {
-							break;
+						// Sakinio pradžia gali būti po ., ? arba ! arba ... bet tik jei po jų neseka mažoji raidė
+						if (['.', '?', '!'].includes(char) || 
+							(char === '.' && fullText.substring(sentenceStart - 3, sentenceStart) === '...')) {
+							if (!isDialogueContinuation(fullText, sentenceStart - 1)) {
+								break;
+							}
 						}
 						sentenceStart--;
 					}
