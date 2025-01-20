@@ -1,12 +1,12 @@
 {
   "žodžiai": {
-    "labas": {
-      "vertimas": "hello",
+    "jag": {
+      "vertimas": "aš",
       "kalbosDalis": "jaustukas",
       "papildomaInfo": "Pasisveikinimo žodis"
     },
-    "namas": {
-      "vertimas": "house",
+    "han": {
+      "vertimas": "jis",
       "kalbosDalis": "daiktavardis",
       "papildomaInfo": "Pastatas gyventi"
     }
