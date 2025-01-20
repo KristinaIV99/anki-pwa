@@ -634,6 +634,14 @@
 					let sentenceEnd = selectionEnd;
 					while (sentenceEnd < fullText.length) {
 						const char = fullText.charAt(sentenceEnd);
+						const nextChars = fullText.substring(sentenceEnd, Math.min(sentenceEnd + 3, fullText.length));
+						
+						// Tikriname tritaškį
+						if (nextChars === '...') {
+							sentenceEnd += 3;  // Įtraukiame tritaškį į sakinį
+							break;  // Baigiame sakinį čia
+						}
+						
 						// Sustojame ties naujos eilutės ženklu
 						if (char === '\n') {
 							const prevChar = fullText.charAt(sentenceEnd - 1);
