@@ -391,6 +391,7 @@
             if (currentPageIndex < pages.length - 1) {
                 currentPageIndex++;
                 displayCurrentPage();
+				saveToLocalStorage(); // Pridedame šią eilutę
             }
         }
 
@@ -398,6 +399,7 @@
             if (currentPageIndex > 0) {
                 currentPageIndex--;
                 displayCurrentPage();
+				saveToLocalStorage();
             }
         }
 
@@ -545,6 +547,7 @@
 			currentPageIndex = 0;
 			displayCurrentPage();
 			localStorage.removeItem('currentText');
+			localStorage.removeItem('currentPageIndex');
 			showStatus('Tekstas ištrintas!', 'success');
 		}
 	
@@ -687,6 +690,7 @@
 
         function saveToLocalStorage() {
             localStorage.setItem('ankiWords', JSON.stringify(selectedWords));
+			localStorage.setItem('currentPageIndex', currentPageIndex);
         }
 
         // Naujos funkcijos
@@ -718,7 +722,12 @@
             const savedText = localStorage.getItem('currentText');
             if (savedText) {
                 pages = splitTextIntoPages(savedText);
-                displayCurrentPage();
+				// Atstatome puslapio numerį
+				const savedPageIndex = localStorage.getItem('currentPageIndex');
+				if (savedPageIndex !== null) {
+					currentPageIndex = parseInt(savedPageIndex);
+				}
+				displayCurrentPage();
             }
             updateWordCount();
             
