@@ -234,7 +234,29 @@
             border: 1px solid #ddd;
             padding: 20px;
         }
+	
+		.word-highlight {
+			cursor: pointer;
+			transition: background-color 0.2s;
+		}
+	
+		.word-highlight:hover {
+			background-color: rgba(255, 235, 59, 0.3);
+		}
+
+    .dictionary-popup {
+        position: fixed;
+        z-index: 1000;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 15px;
+        min-width: 300px;
+        max-width: 400px;
+    }
     </style>
+	<script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
 </head>
 <body>
     <div class="container">
@@ -276,6 +298,60 @@
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <script>
 		alert("JavaScript veikia!"); // PRIDĖTI ŠIĄ EILUTĘ ČIA
+		
+    async function handleWordClick(event) {
+        const clickedWord = event.target.textContent.trim().toLowerCase();
+        const rect = event.target.getBoundingClientRect();
+        
+        try {
+            // Pašaliname seną popup'ą, jei toks yra
+            const oldPopup = document.querySelector('.dictionary-popup');
+            if (oldPopup) {
+                oldPopup.remove();
+            }
+            
+            // Nuskaitome žodyno duomenis
+            const response = await window.fs.readFile('dictionary.json', { encoding: 'utf8' });
+            const dictionary = JSON.parse(response);
+            
+            // Ieškome žodžio
+            const wordInfo = dictionary.žodžiai[clickedWord];
+            
+            if (wordInfo) {
+                showWordPopup(clickedWord, wordInfo, rect);
+            }
+        } catch (error) {
+            console.error('Klaida:', error);
+        }
+    }
+
+		function showWordPopup(word, info, rect) {
+			const popup = document.createElement('div');
+			popup.className = 'dictionary-popup';
+			
+			popup.innerHTML = `
+				<div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+					<h3 style="font-weight: bold; font-size: 18px;">${word}</h3>
+					<button onclick="this.parentElement.parentElement.remove()" style="cursor: pointer;">✕</button>
+				</div>
+				<div style="margin-bottom: 8px;">
+					<strong>Vertimas:</strong> ${info.vertimas}
+				</div>
+				<div style="margin-bottom: 8px;">
+					<strong>Kalbos dalis:</strong> ${info.kalbosDalis}
+				</div>
+				${info.papildomaInfo ? `
+				<div style="margin-bottom: 8px;">
+					<strong>Papildoma informacija:</strong> ${info.papildomaInfo}
+				</div>
+				` : ''}
+			`;
+			
+			popup.style.left = `${rect.left + window.scrollX}px`;
+			popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+			
+			document.body.appendChild(popup);
+		}
 		
         let selectedWords = [];
         let currentPageIndex = 0;
@@ -364,9 +440,20 @@
 				currentPageIndex = 0;
 			}
 		
-			textDisplay.textContent = pages[currentPageIndex];
+			const text = pages[currentPageIndex];
+			const words = text.split(/(\s+)/);
+			textDisplay.innerHTML = words.map(word => {
+				if (word.trim() === '') return word;
+				return `<span class="word-highlight">${word}</span>`;
+			}).join('');
 		
-			// Atnaujiname puslapių skaičius
+			// Pridedame event listener'ius žodžiams
+			const wordElements = textDisplay.getElementsByClassName('word-highlight');
+			Array.from(wordElements).forEach(element => {
+				element.addEventListener('click', handleWordClick);
+			});
+		
+    // Atnaujiname puslapių skaičius
 			const currentPageEl = document.getElementById('currentPage');
 			const totalPagesEl = document.getElementById('totalPages');
 		
