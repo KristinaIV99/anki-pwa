@@ -423,11 +423,13 @@
 			// Pabėgame nuo specialių regex simbolių žodyje
 			const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 			
-			// Sukuriame regex, kuris ieško žodžio su žodžių ribomis
-			const wordRegex = new RegExp(`\\b${escapedWord}\\b`, 'g');
+			// Modifikuojame regex, kad tikrintų ar prieš ir po žodžio yra tarpas arba skyrybos ženklas
+			const wordRegex = new RegExp(`(^|[\\s,.!?;:()"'])(${escapedWord})(?=[\\s,.!?;:()"']|$)`, 'g');
 			let match;
 			
 			while ((match = wordRegex.exec(text)) !== null) {
+				// match[2] yra pats žodis, match[0] yra visas atitikmuo su ribomis
+				const startPos = match.index + match[1].length; // Pridedame pirmosios grupės ilgį
 				range.setStart(textNode, match.index);
 				range.setEnd(textNode, match.index + word.length);
 				highlightWord(range);
